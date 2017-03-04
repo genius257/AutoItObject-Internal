@@ -1,7 +1,7 @@
 #cs ----------------------------------------------------------------------------
  AutoIt Version : 3.3.14.2
  Author.........: genius257
- Version........: 0.1.1
+ Version........: 0.1.2
 #ce ----------------------------------------------------------------------------
 
 #include-once
@@ -16,9 +16,22 @@ Global Const $DISPATCH_PROPERTYGET = 2
 Global Const $DISPATCH_PROPERTYPUT = 4
 Global Const $DISPATCH_PROPERTYPUTREF = 8
 
+Global Const $DISP_E_UNKNOWNINTERFACE = 0x80020001
 Global Const $DISP_E_MEMBERNOTFOUND = 0x80020003
+Global Const $DISP_E_PARAMNOTFOUND = 0x80020004
+Global Const $DISP_E_TYPEMISMATCH = 0x80020005
 Global Const $DISP_E_UNKNOWNNAME = 0x80020006
+Global Const $DISP_E_NONAMEDARGS = 0x80020007
 Global Const $DISP_E_BADVARTYPE = 0x80020008
+Global Const $DISP_E_EXCEPTION = 0x80020009
+Global Const $DISP_E_OVERFLOW = 0x8002000A
+Global Const $DISP_E_BADINDEX = 0x8002000B
+Global Const $DISP_E_UNKNOWNLCID = 0x8002000C
+Global Const $DISP_E_ARRAYISLOCKED = 0x8002000D
+Global Const $DISP_E_BADPARAMCOUNT = 0x8002000E
+Global Const $DISP_E_PARAMNOTOPTIONAL = 0x8002000F
+Global Const $DISP_E_BADCALLEE = 0x80020010
+Global Const $DISP_E_NOTACOLLECTION = 0x80020011
 
 Global Const $tagVARIANT = "ushort vt;ushort r1;ushort r2;ushort r3;uint64 data"
 Global Const $tagDISPPARAMS = "ptr rgvargs;ptr rgdispidNamedArgs;dword cArgs;dword cNamedArgs;"
@@ -188,6 +201,9 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 	ElseIf DllStructGetData($t_rgszNames, 1)=="__defineSetter" Then
 		DllStructSetData($tIds, 1, -3)
 		Return $S_OK
+	ElseIf DllStructGetData($t_rgszNames, 1)=="__defineMethod" Then
+		DllStructSetData($tIds, 1, -4)
+		Return $S_OK
 	EndIf
 
 	Local $iID = -1
@@ -260,11 +276,12 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	If $dispIdMember=-1 Then Return $DISP_E_MEMBERNOTFOUND
 	Local $tVARIANT, $_tVARIANT, $tDISPPARAMS
 	Local $t
+	Local $i
 
 	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
 	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
 
-	If ($dispIdMember=-2) Or ($dispIdMember=-3) Then
+	If ($dispIdMember=-2) Or ($dispIdMember=-3) Or ($dispIdMember=-4) Then
 		$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 		$t = DllStructCreate("ptr id_ptr;long id;ptr str_ptr_ptr;ptr str_ptr")
 		DllStructSetData($t, "id_ptr", DllStructGetPtr($t, 2))
@@ -282,6 +299,12 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$pProperty = $tProperty.Next
 			$tProperty = DllStructCreate($tagProperty, $pProperty)
 		Next
+		If ($dispIdMember=-4) Then
+			$_tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
+			$_tVARIANT.vt = $VT_RECORD
+			$_tVARIANT.data = _WinAPI_CreateString(DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($tVARIANT.data, True)&"]", $tVARIANT.data), 1))
+			Return $S_OK
+		EndIf
 		If Not($tVARIANT.vt = $VT_I4) Then Return $DISP_E_BADVARTYPE;$VT_I4 should be the type returned from DllCallbackRegister
 		If ($dispIdMember=-2) Then $tProperty.__getter = $tVARIANT.data
 		If ($dispIdMember=-3) Then $tProperty.__setter = $tVARIANT.data
@@ -322,6 +345,35 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 				$_tVARIANT.vt = $__tVARIANT.vt
 				$_tVARIANT.data = $__tVARIANT.data
 			EndIf
+			Return $S_OK
+		ElseIf $tVARIANT.vt = $VT_RECORD Then
+			$_tVARIANT.vt = $VT_BSTR
+			$_tVARIANT.data = $tVARIANT.data
+
+			Local $oIDispatch = __IDispatch()
+			$oIDispatch.a = 0
+			Local $tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			Local $aArgs[$tDISPPARAMS.cArgs+1]
+			Local $iSize = DllStructGetSize(DllStructCreate($tagVARIANT))
+
+			Local $tPtr = DllStructCreate("ptr ptr")
+			$tPtr.ptr = $oIDispatch
+			Local $__tIDispatch = DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties", $tPtr.ptr)
+			Local $__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
+			Local $__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.VARIANT)
+
+			$aArgs[0]="CallArgArray"
+			For $i=$tDISPPARAMS.cArgs To 1 Step -1
+				$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+$iSize*($i-1))
+				$__tVARIANT.vt = $tVARIANT.vt
+				$__tVARIANT.data = $tVARIANT.data
+				$aArgs[$tDISPPARAMS.cArgs-$i+1] = $oIDispatch.a
+			Next
+			$oIDispatch.a = Call(DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($_tVARIANT.data, True)&"]", $_tVARIANT.data), 1), $aArgs)
+
+			$_tVARIANT.vt = $__tVARIANT.vt
+			$_tVARIANT.data = $__tVARIANT.data
+
 			Return $S_OK
 		EndIf
 
