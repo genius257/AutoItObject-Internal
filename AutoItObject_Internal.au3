@@ -1,7 +1,7 @@
 #cs ----------------------------------------------------------------------------
  AutoIt Version : 3.3.14.2
  Author.........: genius257
- Version........: 0.1.0
+ Version........: 0.1.1
 #ce ----------------------------------------------------------------------------
 
 #include-once
@@ -224,7 +224,7 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 		$iID = $iIndex+1
 	EndIf
 
-	If $iID==-1 Then Return Return $DISP_E_UNKNOWNNAME
+	If $iID==-1 Then Return $DISP_E_UNKNOWNNAME
 	DllStructSetData($tIds, 1, $iID)
 	Return $S_OK
 EndFunc
