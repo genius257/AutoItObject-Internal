@@ -1,7 +1,7 @@
 #cs ----------------------------------------------------------------------------
  AutoIt Version : 3.3.14.2
  Author.........: genius257
- Version........: 0.1.2
+ Version........: 1.0.0
 #ce ----------------------------------------------------------------------------
 
 #include-once
@@ -10,6 +10,7 @@
 
 Global Const $IID_IUnknown = "{00000000-0000-0000-C000-000000000046}"
 Global Const $IID_IDispatch = "{00020400-0000-0000-C000-000000000046}"
+Global Const $IID_IRecordInfo = "{0000002F-0000-0000-C000-000000000046}"
 
 Global Const $DISPATCH_METHOD = 1
 Global Const $DISPATCH_PROPERTYGET = 2
@@ -74,7 +75,7 @@ Func IUnknown()
 EndFunc
 
 Func IDispatch()
-	Local $tagObject = "int RefCount;int Size;ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties"
+	Local $tagObject = "int RefCount;int Size;ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties;BYTE lock;"
 	Local $tObject = DllStructCreate($tagObject)
 	Local $proc
 	Local Static $QueryInterface = 0
@@ -145,6 +146,8 @@ Func __IDispatch();create IDispatch object and alter core functions to specializ
 EndFunc
 
 Func QueryInterface($pSelf, $pRIID, $pObj)
+	Local $sGUID=DllCall("ole32.dll", "int", "StringFromGUID2", "PTR", $pRIID, "wstr", "", "int", 40)[2]
+	If (Not ($sGUID=$IID_IDispatch)) And (Not ($sGUID=$IID_IUnknown)) Then Return $E_NOINTERFACE
 	Local $tStruct = DllStructCreate("ptr", $pObj)
 	DllStructSetData($tStruct, 1, $pSelf)
 	Return $S_OK
@@ -160,7 +163,9 @@ Func Release($pSelf)
 	Local $tStruct = DllStructCreate("int Ref", $pSelf-8)
 	$tStruct.Ref -= 1
 	If $tStruct.Ref == 0 Then
+		Return 0;TODO: look into access violation occuring sometimes (0xC0000005)
 		_MemGlobalFree(GlobalHandle($pSelf-8))
+		;TODO: add release of callbacks, properties and getters/setters
 		Return 0
 	EndIf
    Return $tStruct.Ref
@@ -168,16 +173,18 @@ EndFunc
 
 Func __GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 	Local $tIds = DllStructCreate("long", $rgDispId)
-	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+;~ 	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1)
 	If $pProperty=0 Then
 		$tProp = DllStructCreate($tagProperty)
 			$pData = MemCloneGlob($tProp)
 			$tProp = DllStructCreate($tagProperty, $pData)
-				$tProp.Name = 0;no reason to wase memory on a string in this object
+				$tProp.Name = 0;no reason to waste memory on a string in this object
 					$tVARIANT = DllStructCreate($tagVARIANT)
 					$pVARIANT = MemCloneGlob($tVARIANT)
 					$tVARIANT = DllStructCreate($tagVARIANT, $pVARIANT)
-						$tVARIANT.vt = $VT_EMPTY
+;~ 						$tVARIANT.vt = $VT_EMPTY
+					VariantInit($tVARIANT)
 				$tProp.Variant = $pVARIANT
 		DllStructSetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))), 1, $pData)
 	EndIf
@@ -187,22 +194,30 @@ EndFunc; __GetIDsOfNames
 
 Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 	Local $tIds = DllStructCreate("long", $rgDispId)
-	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+;~ 	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1)
 	Local $tProperty = 0
 	Local $iSize2
 
 	Local $pStr = DllStructGetData(DllStructCreate("ptr", $rgszNames), 1)
 	Local $iSize = _WinAPI_StrLen($pStr, True)
 	Local $t_rgszNames = DllStructCreate("WCHAR["&$iSize&"]", $pStr)
+	Local $s_rgszName = DllStructGetData($t_rgszNames, 1)
 
-	If DllStructGetData($t_rgszNames, 1)=="__defineGetter" Then
+	If $s_rgszName=="__defineGetter" Then
 		DllStructSetData($tIds, 1, -2)
 		Return $S_OK
-	ElseIf DllStructGetData($t_rgszNames, 1)=="__defineSetter" Then
+	ElseIf $s_rgszName=="__defineSetter" Then
 		DllStructSetData($tIds, 1, -3)
 		Return $S_OK
-	ElseIf DllStructGetData($t_rgszNames, 1)=="__defineMethod" Then
+	ElseIf $s_rgszName=="__defineMethod" Then
 		DllStructSetData($tIds, 1, -4)
+		Return $S_OK
+	ElseIf $s_rgszName=="__unset" Then
+		DllStructSetData($tIds, 1, -5)
+		Return $S_OK
+	ElseIf $s_rgszName=="__lock" Then
+		DllStructSetData($tIds, 1, -6)
 		Return $S_OK
 	EndIf
 
@@ -222,7 +237,9 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 	WEnd
 	Local $tProp, $pData, $tVARIANT, $pVARIANT
 
-	If $iID==-1 Then
+	Local $iLock = DllStructGetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + ((@AutoItX64?8:4)*7*2) + (@AutoItX64?8:4)),1)
+
+	If ($iID==-1) And $iLock=0 Then
 		$tProp = DllStructCreate($tagProperty)
 		$pData = MemCloneGlob($tProp)
 		$tProp = DllStructCreate($tagProperty, $pData)
@@ -230,7 +247,8 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 				$tVARIANT = DllStructCreate($tagVARIANT)
 				$pVARIANT = MemCloneGlob($tVARIANT)
 				$tVARIANT = DllStructCreate($tagVARIANT, $pVARIANT)
-					$tVARIANT.vt = $VT_EMPTY
+;~ 					$tVARIANT.vt = $VT_EMPTY
+				VariantInit($tVARIANT)
 			$tProp.Variant = $pVARIANT
 		If $tProperty=0 Then;first item in list
 			DllStructSetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))), 1, $pData)
@@ -260,15 +278,15 @@ Func __Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarR
 
 	Local $tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
 
-	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)==0)) And (Not(BitAND($wFlags, $DISPATCH_METHOD)==0)) Then
-		$_tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
-		$_tVARIANT.vt = $tVARIANT.vt
-		$_tVARIANT.data = $tVARIANT.data
+;~ 	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)==0)) And (Not(BitAND($wFlags, $DISPATCH_METHOD)==0)) Then
+	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)==0)) Then
+		VariantCopy($pVarResult, $tVARIANT)
+		Return $S_OK
 	Else
 		$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 		$_tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-		$tVARIANT.vt = $_tVARIANT.vt
-		$tVARIANT.data = ($tVARIANT.vt = $VT_BSTR)?_WinAPI_CreateString(DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($_tVARIANT.data, True)&"]", $_tVARIANT.data), 1)):$_tVARIANT.data
+		VariantClear($tVARIANT)
+		VariantCopy($tVARIANT, $_tVARIANT)
 	EndIf
 EndFunc
 
@@ -278,37 +296,138 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	Local $t
 	Local $i
 
-	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+;~ 	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1)
 	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
 
-	If ($dispIdMember=-2) Or ($dispIdMember=-3) Or ($dispIdMember=-4) Then
-		$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
-		$t = DllStructCreate("ptr id_ptr;long id;ptr str_ptr_ptr;ptr str_ptr")
-		DllStructSetData($t, "id_ptr", DllStructGetPtr($t, 2))
-		DllStructSetData($t, "str_ptr", $tDISPPARAMS.rgvargs+DllStructGetSize(DllStructCreate($tagVARIANT)))
-		$t.str_ptr = DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize(DllStructCreate($tagVARIANT))), "data")
-		$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
-		GetIDsOfNames($pSelf, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"))
-
-		$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
-		$tProperty = DllStructCreate($tagProperty, $pProperty)
-
-		If $tDISPPARAMS.cArgs<>2 Then Return $S_OK
-		$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-		For $i=1 To $t.id
-			$pProperty = $tProperty.Next
-			$tProperty = DllStructCreate($tagProperty, $pProperty)
-		Next
-		If ($dispIdMember=-4) Then
-			$_tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
-			$_tVARIANT.vt = $VT_RECORD
-			$_tVARIANT.data = _WinAPI_CreateString(DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($tVARIANT.data, True)&"]", $tVARIANT.data), 1))
+	If $dispIdMember<-1 Then
+		If $dispIdMember=-6 Then;__lock
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			If $tDISPPARAMS.cArgs<>0 Then Return $DISP_E_BADPARAMCOUNT
+			If DllStructGetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + ((@AutoItX64?8:4)*7*2) + (@AutoItX64?8:4)),1)>0 Then Return $DISP_E_EXCEPTION
+			DllStructSetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + ((@AutoItX64?8:4)*7*2) + (@AutoItX64?8:4)),1, 1)
 			Return $S_OK
 		EndIf
-		If Not($tVARIANT.vt = $VT_I4) Then Return $DISP_E_BADVARTYPE;$VT_I4 should be the type returned from DllCallbackRegister
-		If ($dispIdMember=-2) Then $tProperty.__getter = $tVARIANT.data
-		If ($dispIdMember=-3) Then $tProperty.__setter = $tVARIANT.data
-		Return $S_OK
+
+		If $dispIdMember=-5 Then;__unset
+			;TODO: remove getter/setter if !=0
+			If DllStructGetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + ((@AutoItX64?8:4)*7*2) + (@AutoItX64?8:4)),1)>0 Then
+				Return $DISP_E_EXCEPTION
+			EndIf
+
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
+			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+			If Not($VT_BSTR==$tVARIANT.vt) Then Return $DISP_E_BADVARTYPE
+			Local $sProperty = _WinAPI_GetString($tVARIANT.data);the string to search for
+			Local $tProperty=0,$tProperty_Prev
+			While 1
+				If $pProperty=0 Then ExitLoop
+				$tProperty_Prev = $tProperty
+				$tProperty = DllStructCreate($tagProperty, $pProperty)
+				If _WinAPI_GetString($tProperty.Name)==$sProperty Then
+					If $tProperty_Prev==0 Then
+						DllStructSetData(DllStructCreate("ptr", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2), 1, $tProperty.Next)
+					Else
+						$tProperty_Prev.Next = $tProperty.next
+					EndIf
+					VariantClear($tProperty.Variant)
+					_MemGlobalFree(GlobalHandle($tProperty.Variant))
+					$tProperty = 0
+					_MemGlobalFree(GlobalHandle($pProperty))
+					Return $S_OK
+				EndIf
+				$pProperty = $tProperty.Next
+			WEnd
+			Return $DISP_E_MEMBERNOTFOUND
+		EndIf
+
+		If ($dispIdMember=-4) Then;__defineMethod (deprecated)
+			Return $DISP_E_EXCEPTION
+		EndIf
+
+		If ($dispIdMember=-2) Then;__defineGetter
+			If DllStructGetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + ((@AutoItX64?8:4)*7*2) + (@AutoItX64?8:4)),1)>0 Then
+				Return $DISP_E_EXCEPTION
+			EndIf
+
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			If $tDISPPARAMS.cArgs<>2 Then Return $DISP_E_BADPARAMCOUNT
+			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+			If Not ($tVARIANT.vt==$VT_RECORD) Then Return $DISP_E_BADVARTYPE
+			Local $tVARIANT2 = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize($tVARIANT))
+			If Not ($tVARIANT2.vt==$VT_BSTR) Then Return $DISP_E_BADVARTYPE
+
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			$t = DllStructCreate("ptr id_ptr;long id;ptr str_ptr_ptr;ptr str_ptr")
+			DllStructSetData($t, "id_ptr", DllStructGetPtr($t, 2))
+			DllStructSetData($t, "str_ptr", $tDISPPARAMS.rgvargs+DllStructGetSize(DllStructCreate($tagVARIANT)))
+			$t.str_ptr = DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize(DllStructCreate($tagVARIANT))), "data")
+			$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
+			GetIDsOfNames($pSelf, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"));TODO
+
+			$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+			$tProperty = DllStructCreate($tagProperty, $pProperty)
+
+			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+			For $i=1 To $t.id
+				$pProperty = $tProperty.Next
+				$tProperty = DllStructCreate($tagProperty, $pProperty)
+			Next
+			If ($tProperty.__getter=0) Then
+				$tVARIANT_Getter = DllStructCreate($tagVARIANT)
+				$pVARIANT_Getter = MemCloneGlob($tVARIANT_Getter)
+				VariantInit($pVARIANT_Getter)
+			Else
+				$pVARIANT_Getter = $tProperty.__getter
+				VariantClear($pVARIANT_Getter)
+			EndIf
+			VariantCopy($pVARIANT_Getter, $tVARIANT)
+			$tProperty.__getter = $pVARIANT_Getter
+			Return $S_OK
+		EndIf
+
+		If ($dispIdMember=-3) Then;defineSetter
+			If DllStructGetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + ((@AutoItX64?8:4)*7*2) + (@AutoItX64?8:4)),1)>0 Then
+				Return $DISP_E_EXCEPTION
+			EndIf
+
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			If $tDISPPARAMS.cArgs<>2 Then Return $DISP_E_BADPARAMCOUNT
+			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+			If Not ($tVARIANT.vt==$VT_RECORD) Then Return $DISP_E_BADVARTYPE
+			Local $tVARIANT2 = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize($tVARIANT))
+			If Not ($tVARIANT2.vt==$VT_BSTR) Then Return $DISP_E_BADVARTYPE
+
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			$t = DllStructCreate("ptr id_ptr;long id;ptr str_ptr_ptr;ptr str_ptr")
+			DllStructSetData($t, "id_ptr", DllStructGetPtr($t, 2))
+			DllStructSetData($t, "str_ptr", $tDISPPARAMS.rgvargs+DllStructGetSize(DllStructCreate($tagVARIANT)))
+			$t.str_ptr = DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize(DllStructCreate($tagVARIANT))), "data")
+			$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
+			GetIDsOfNames($pSelf, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"));TODO
+
+			$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + DllStructGetSize(DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7]"))),1)
+			$tProperty = DllStructCreate($tagProperty, $pProperty)
+
+			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+			For $i=1 To $t.id
+				$pProperty = $tProperty.Next
+				$tProperty = DllStructCreate($tagProperty, $pProperty)
+			Next
+			If ($tProperty.__setter=0) Then
+				$tVARIANT_Setter = DllStructCreate($tagVARIANT)
+				$pVARIANT_Setter = MemCloneGlob($tVARIANT_Setter)
+				VariantInit($pVARIANT_Setter)
+			Else
+				$pVARIANT_Setter = $tProperty.__setter
+				VariantClear($pVARIANT_Setter)
+			EndIf
+			VariantCopy($pVARIANT_Setter, $tVARIANT)
+			$tProperty.__setter = $pVARIANT_Setter
+			Return $S_OK
+		EndIf
+		Return $DISP_E_EXCEPTION;TODO: The application needs to raise an exception. In this case, the structure passed in pexcepinfo should be filled in.
 	EndIf
 
 	For $i=1 To $dispIdMember
@@ -316,106 +435,73 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 		$tProperty = DllStructCreate($tagProperty, $pProperty)
 	Next
 
-	Local $tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
+	$tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
 
-	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)==0)) And (Not(BitAND($wFlags, $DISPATCH_METHOD)==0)) Then
+;~ 	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)=0)) And (Not(BitAND($wFlags, $DISPATCH_METHOD)=0)) Then
+	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)=0)) Then
 		$_tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 		If Not($tProperty.__getter = 0) Then
-			Local $oIDispatch = __IDispatch()
-			Local $_oIDispatch = __IDispatch()
-			$_oIDispatch.a = "";create data entry
-			Local $tPtr = DllStructCreate("ptr ptr")
-			$tPtr.ptr = $_oIDispatch
-			Local $__tIDispatch = DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties", $tPtr.ptr)
-			Local $__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
-			Local $__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.VARIANT)
-			$__tVARIANT.vt = $tVARIANT.vt
-			$__tVARIANT.data = $tVARIANT.data
-
-			DllCallAddress("long", DllCallbackGetPtr($tProperty.__getter), "IDispatch", $oIDispatch, "IDispatch", $_oIDispatch)
-
-			$tVARIANT.vt = $__tVARIANT.vt
-			$tVARIANT.data = $__tVARIANT.data
-
-			$tPtr.ptr = $oIDispatch
-			$__tIDispatch = DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties", $tPtr.ptr)
-			If Not($__tIDispatch.Properties=0) Then
-				Local $__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
-				Local $__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.Variant)
-				$_tVARIANT.vt = $__tVARIANT.vt
-				$_tVARIANT.data = $__tVARIANT.data
-			EndIf
-			Return $S_OK
-		ElseIf $tVARIANT.vt = $VT_RECORD Then
-			$_tVARIANT.vt = $VT_BSTR
-			$_tVARIANT.data = $tVARIANT.data
-
-			Local $oIDispatch = __IDispatch()
-			$oIDispatch.a = 0
-			Local $tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
-			Local $aArgs[$tDISPPARAMS.cArgs+1]
-			Local $iSize = DllStructGetSize(DllStructCreate($tagVARIANT))
-
-			Local $tPtr = DllStructCreate("ptr ptr")
-			$tPtr.ptr = $oIDispatch
-			Local $__tIDispatch = DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties", $tPtr.ptr)
-			Local $__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
-			Local $__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.VARIANT)
-
-			$aArgs[0]="CallArgArray"
-			For $i=$tDISPPARAMS.cArgs To 1 Step -1
-				$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+$iSize*($i-1))
-				$__tVARIANT.vt = $tVARIANT.vt
-				$__tVARIANT.data = $tVARIANT.data
-				$aArgs[$tDISPPARAMS.cArgs-$i+1] = $oIDispatch.a
-			Next
-			$oIDispatch.a = Call(DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($_tVARIANT.data, True)&"]", $_tVARIANT.data), 1), $aArgs)
-
-			$_tVARIANT.vt = $__tVARIANT.vt
-			$_tVARIANT.data = $__tVARIANT.data
-
+			$oIDispatch = IDispatch()
+			$oIDispatch.val = 0
+			$oIDispatch.ret = 0
+			$oIDispatch.parent = ObjCreateInterface($pSelf,$IID_IDispatch)
+			Local $_pProperty = DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1)
+			Local $_tProperty = DllStructCreate($tagProperty, $_pProperty)
+			VariantClear($_tProperty.Variant)
+			VariantCopy($_tProperty.Variant, $tProperty.__getter)
+			Local $fGetter = $oIDispatch.val
+			VariantClear($_tProperty.Variant)
+			VariantCopy($_tProperty.Variant, $tProperty.Variant)
+			$oIDispatch.__lock()
+			Local $mRet = Call($fGetter, $oIDispatch)
+			Local $iError = @error, $iExtended = @extended
+			VariantClear($tProperty.Variant)
+			VariantCopy($tProperty.Variant, $_tProperty.Variant)
+			$oIDispatch.ret = $mRet
+			$_tProperty = DllStructCreate($tagProperty, $_tProperty.Next)
+			VariantCopy($pVarResult, $_tProperty.Variant)
+			$oIDispatch=0
+			Return ($iError<>0)?$DISP_E_EXCEPTION:$S_OK
 			Return $S_OK
 		EndIf
 
-		$_tVARIANT.vt = $tVARIANT.vt
-		$_tVARIANT.data = $tVARIANT.data
+		VariantCopy($pVarResult, $tVARIANT)
+		Return $S_OK
 	Else
 		$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
-		$_tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-
-		If Not($tProperty.__setter=0) Then
-			Local $oIDispatch = __IDispatch()
-			Local $_oIDispatch = __IDispatch()
-			$_oIDispatch.a = "";create data entry
-			Local $tPtr = DllStructCreate("ptr ptr")
-			$tPtr.ptr = $_oIDispatch
-			Local $__tIDispatch = DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties", $tPtr.ptr)
-			Local $__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
-			Local $__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.VARIANT)
-			$__tVARIANT.vt = $_tVARIANT.vt
-			$__tVARIANT.data = $_tVARIANT.data
-
-			$oIDispatch.a = "";create data entry
-			$tPtr.ptr = $oIDispatch
-			$__tIDispatch = DllStructCreate("ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties", $tPtr.ptr)
-			$__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
-			$__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.VARIANT)
-			$__tVARIANT.vt = $tVARIANT.vt
-			$__tVARIANT.data = $tVARIANT.data
-
-			DllCallAddress("long", DllCallbackGetPtr($tProperty.__setter), "IDispatch", $oIDispatch, "IDispatch", $_oIDispatch)
-			$__tProperty = DllStructCreate($tagProperty, $__tIDispatch.Properties)
-			$__tVARIANT = DllStructCreate($tagVARIANT, $__tProperty.Variant)
-			$tVARIANT.vt = $__tVARIANT.vt
-			$tVARIANT.data = $__tVARIANT.data
-;~ 			EndIf
+		If Not ($tProperty.__setter=0) Then
+			$oIDispatch = IDispatch()
+			$oIDispatch.val = 0
+			$oIDispatch.ret = 0
+			$oIDispatch.parent = ObjCreateInterface($pSelf,$IID_IDispatch)
+			Local $_pProperty = DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1)
+			Local $_tProperty = DllStructCreate($tagProperty, $_pProperty)
+			Local $_tProperty2 = DllStructCreate($tagProperty, $_tProperty.Next)
+			VariantClear($_tProperty.Variant)
+			VariantCopy($_tProperty.Variant, $tProperty.__setter)
+			VariantClear($_tProperty2.Variant)
+			VariantCopy($_tProperty2.Variant, $tDISPPARAMS.rgvargs)
+			Local $fSetter = $oIDispatch.val
+			VariantClear($_tProperty.Variant)
+			VariantCopy($_tProperty.Variant, $tProperty.Variant)
+			$oIDispatch.__lock()
+			Local $mRet = Call($fSetter, $oIDispatch)
+			Local $iError = @error, $iExtended = @extended
+			VariantClear($tProperty.Variant)
+			VariantCopy($tProperty.Variant, $_tProperty.Variant)
+			$oIDispatch.ret = $mRet
+			$_tProperty = DllStructCreate($tagProperty, $_tProperty.Next)
+			VariantCopy($pVarResult, $_tProperty.Variant)
+			$oIDispatch=0
+			Return ($iError<>0)?$DISP_E_EXCEPTION:$S_OK
 			Return $S_OK
 		EndIf
 
-		$tVARIANT.vt = $_tVARIANT.vt
-		$tVARIANT.data = ($tVARIANT.vt = $VT_BSTR)?_WinAPI_CreateString(DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($_tVARIANT.data, True)&"]", $_tVARIANT.data), 1)):$_tVARIANT.data
+		$_tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+		VariantClear($tVARIANT)
+		VariantCopy($tVARIANT, $_tVARIANT)
 	EndIf
-   Return $S_OK
+	Return $S_OK
 EndFunc
 
 Func MemCloneGlob($tObject);clones DllStruct to Global memory and return pointer to new allocated memory
@@ -427,36 +513,85 @@ Func MemCloneGlob($tObject);clones DllStruct to Global memory and return pointer
 EndFunc
 
 Func GlobalHandle($pMem)
-   $aRet = DllCall("Kernel32.dll", "ptr", "GlobalHandle", "ptr", $pMem)
+   Local $aRet = DllCall("Kernel32.dll", "ptr", "GlobalHandle", "ptr", $pMem)
    If @error<>0 Then Return SetError(@error, @extended, 0)
    If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
    Return $aRet[0]
 EndFunc
 
 Func LocalSize($hMem)
-	$aRet = DllCall("Kernel32.dll", "UINT", "LocalSize", "handle", $hMem)
+	Local $aRet = DllCall("Kernel32.dll", "UINT", "LocalSize", "handle", $hMem)
 	If @error<>0 Then Return SetError(@error, @extended, 0)
 	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
 	Return $aRet[0]
 EndFunc
 
 Func LocalHandle($pMem)
-	$aRet = DllCall("Kernel32.dll", "handle", "LocalHandle", "ptr", $pMem)
+	Local $aRet = DllCall("Kernel32.dll", "handle", "LocalHandle", "ptr", $pMem)
 	If @error<>0 Then Return SetError(@error, @extended, 0)
 	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
 	Return $aRet[0]
 EndFunc
 
 Func HeapSize($hHeap, $dwFlags, $lpMem)
-	$aRet = DllCall("Kernel32.dll", "ULONG_PTR", "HeapSize", "handle", $hHeap, "dword", $dwFlags, "LONG_PTR", $lpMem)
+	Local $aRet = DllCall("Kernel32.dll", "ULONG_PTR", "HeapSize", "handle", $hHeap, "dword", $dwFlags, "LONG_PTR", $lpMem)
 	If @error<>0 Then Return SetError(@error, @extended, 0)
 	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
 	Return $aRet[0]
 EndFunc
 
 Func GetProcessHeap()
-	$aRet = DllCall("Kernel32.dll", "handle", "GetProcessHeap")
+	Local $aRet = DllCall("Kernel32.dll", "handle", "GetProcessHeap")
 	If @error<>0 Then Return SetError(@error, @extended, 0)
 	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
 	Return $aRet[0]
+EndFunc
+
+Func SysAllocString($psz)
+;~ 	Local $aRet = DllCall("OleAut32.dll","PTR","SysAllocString","WSTR",$psz)
+	Local $aRet = DllCall("OleAut32.dll","PTR","SysAllocString","PTR",$psz)
+	If @error<>0 Then Return SetError(@error, @extended, 0)
+	If $aRet[0]=0 Then Return SetError(-1, @extended, $aRet[0])
+	Return $aRet[0]
+EndFunc
+
+Func SysFreeString($bstrString)
+	Local $aRet = DllCall("OleAut32.dll","NONE","SysFreeString","PTR",$bstrString)
+	If @error<>0 Then Return SetError(@error, @extended, 0)
+	Return $aRet[0]
+EndFunc
+
+Func SysAddRefString($bstrString)
+	Local $aRet = DllCall("Oleaut32.dll","LONG","SysAddRefString","PTR",$bstrString)
+	If @error<>0 Then Return SetError(@error, @extended, 0)
+	Return $aRet[0]
+EndFunc
+
+Func VariantInit($tVARIANT)
+	Local $aRet=DllCall("OleAut32.dll","LONG","VariantInit",IsDllStruct($tVARIANT)?"struct*":"PTR",$tVARIANT)
+	If @error<>0 Then Return SetError(-1, @error, 0)
+	If $aRet[0]<>$S_OK Then SetError($aRet, 0, $tVARIANT)
+	Return 1
+EndFunc
+
+Func VariantCopy($tVARIANT_Dest,$tVARIANT_Src)
+	Local $aRet=DllCall("OleAut32.dll","LONG","VariantCopy",IsDllStruct($tVARIANT_Dest)?"struct*":"PTR",$tVARIANT_Dest, IsDllStruct($tVARIANT_Src)?"struct*":"PTR", $tVARIANT_Src)
+	If @error<>0 Then Return SetError(-1, @error, 0)
+	If $aRet[0]<>$S_OK Then SetError($aRet, 0, 0)
+	Return 1
+EndFunc
+
+Func VariantClear($tVARIANT)
+	Local $aRet=DllCall("OleAut32.dll","LONG","VariantClear",IsDllStruct($tVARIANT)?"struct*":"PTR",$tVARIANT)
+	If @error<>0 Then Return SetError(-1, @error, 0)
+	If $aRet[0]<>$S_OK Then SetError($aRet, 0, $tVARIANT)
+	Return 1
+EndFunc
+
+Func VariantChangeType()
+	;TODO
+EndFunc
+
+Func VariantChangeTypeEx()
+	;TODO
 EndFunc
