@@ -1,7 +1,7 @@
 #cs ----------------------------------------------------------------------------
  AutoIt Version : 3.3.14.2
  Author.........: genius257
- Version........: 1.0.0
+ Version........: 1.0.1
 #ce ----------------------------------------------------------------------------
 
 #include-once
@@ -441,7 +441,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)=0)) Then
 		$_tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 		If Not($tProperty.__getter = 0) Then
-			$oIDispatch = IDispatch()
+			Local $oIDispatch = IDispatch()
 			$oIDispatch.val = 0
 			$oIDispatch.ret = 0
 			$oIDispatch.parent = ObjCreateInterface($pSelf,$IID_IDispatch)
@@ -470,7 +470,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	Else
 		$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 		If Not ($tProperty.__setter=0) Then
-			$oIDispatch = IDispatch()
+			Local $oIDispatch = IDispatch()
 			$oIDispatch.val = 0
 			$oIDispatch.ret = 0
 			$oIDispatch.parent = ObjCreateInterface($pSelf,$IID_IDispatch)
