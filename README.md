@@ -62,6 +62,21 @@ Type | Name | description
 String | "property" | The property to set the get accessor
 Function | Function | Function to be called when setting the property value
 
+### __keys
+
+#### **Syntax**
+
+__keys()
+
+#### **Description:**
+
+	get all property names defined in object
+
+#### **Parameters:**
+
+Type | Name | description
+--- | --- | ---
+
 ### __unset
 
 #### **Syntax**
@@ -123,5 +138,20 @@ IDispatch | AccessorObject | A IDispatch object used to access passed data and s
 Type | Name | description | Access
 --- | --- | --- | ---
 IDispatch | parent | The IDispatch object containing the accessor.<br/>**WARNING:** accessing other properties via this object will still trigger accessors. Be careful | Read only
+IDispatch | arguments | A locked IDispatch object.<br />For more info, see ArgumentsObject
 *Any* | ret | The value passed in the set-accessor. This is not used by the get-accessor | Read and Write
 *Any* | val | The value of the property the accessor is bound to | Read and Write
+
+### ArgumentsObject
+
+#### **Description:**
+
+	A locked IDispatch object, used with the AccessorObject
+	
+
+#### **Properties:**
+
+Type | Name | description | Access
+--- | --- | --- | ---
+int32 | length | number of arguments passed with the call | Read and Write
+Array | values | the arguments passed with the call | Read and Write
