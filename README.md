@@ -17,7 +17,7 @@ EndFunc
 MsgBox(0, "", $myCar.DisplayCar)
 ```
 
-**TODO:**
+## **TODO:**
 * Garbage collection
 * ~Method support~ **_Added in v0.1.2_**
 * ~Support for more/all AutoIt variable-types~ **_Added in v1.0.0_**
@@ -26,28 +26,102 @@ MsgBox(0, "", $myCar.DisplayCar)
 * ~equivalent of @error and @extended~ **_Added in v1.0.0_**
 
 
-**Methods:**
+## **Methods:**
 
-`__defineGetter("property", Function)`
+### __defineGetter
 
-	set the get accessor
+#### **Syntax**
 
+__defineGetter("property", Function)
 
-`__defineSetter("property", Function)`
+#### **Description:**
 
-	set the set accessor
+	set the get-accessor
 
+#### **Parameters:**
 
-~~`__defineMethod("Property", "Function")`~~ deprecated in v1.0.0
+Type | Name | description
+--- | --- | ---
+String | "property" | The property to set the get accessor
+Function | Function | Function to be called when getting the property value
 
-	~~Set a function as a property value~~
+### __defineSetter
 
+#### **Syntax**
 
-`__unset("property")`
+__defineSetter("property", Function)
+
+#### **Description:**
+
+	set the set-accessor
+
+#### **Parameters:**
+
+Type | Name | description
+--- | --- | ---
+String | "property" | The property to set the get accessor
+Function | Function | Function to be called when setting the property value
+
+### __unset
+
+#### **Syntax**
+
+__unset("property")
+
+#### **Description:**
 
 	delete a property from the object
 
+#### **Parameters:**
 
-`__lock()`
+Type | Name | description
+--- | --- | ---
+String | "property" | The property to delete
+
+### __lock
+
+#### **Syntax**
+
+__lock()
+
+#### **Description:**
 
 	prevents creation/changing of any properties, except values in already defined properties. To prevent value change of a property, use `__defineSetter`
+
+#### **Parameters:**
+
+Type | Name | description
+--- | --- | ---
+
+## **Other**
+
+### Function
+
+#### **Syntax**
+
+Function([AccessorObject])
+
+#### **Description:**
+
+	The callback function used with accessors
+	Function is a placeholder for the application-defined function name
+	
+#### **Parameters:**
+
+Type | Name | description
+--- | --- | ---
+IDispatch | AccessorObject | A IDispatch object used to access passed data and self
+
+### AccessorObject
+
+#### **Description:**
+
+	A locked IDispatch object, used with Accessor callback Function
+	
+#### **Properties:**
+
+Type | Name | description | Access
+--- | --- | --- | ---
+IDispatch | parent | The IDispatch object containing the accessor.<br/>**WARNING:** accessing other properties via this object will still trigger accessors. Be careful | Read only
+*Any* | ret | The value passed in the set-accessor. This is not used by the get-accessor | Read and Write
+*Any* | val | The value of the property the accessor is bound to | Read and Write
