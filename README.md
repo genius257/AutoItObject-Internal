@@ -18,7 +18,7 @@ MsgBox(0, "", $myCar.DisplayCar)
 ```
 
 ## **TODO:**
-* Garbage collection
+* ~Garbage collection~ **_Added in v1.0.3 with the exception of interface methods_**
 * ~Method support~ **_Added in v0.1.2_**
 * ~Support for more/all AutoIt variable-types~ **_Added in v1.0.0_**
 * ~Accessors~ **_Added in v0.1.0_**
@@ -108,6 +108,20 @@ __lock()
 Type | Name | description
 --- | --- | ---
 
+### __destructor
+
+#### **Syntax**
+
+__destructor(DestructorFunction)
+
+#### **Description:**
+
+	DestructorFunction is called when the lifetime of the object ends
+
+Type | Name | description
+--- | --- | ---
+Function | DestructorFunction | Function to be called when lifetime of the object ends
+
 ## **Other**
 
 ### Function
@@ -147,7 +161,6 @@ IDispatch | arguments | A locked IDispatch object.<br />For more info, see Argum
 #### **Description:**
 
 	A locked IDispatch object, used with the AccessorObject
-	
 
 #### **Properties:**
 
@@ -155,3 +168,15 @@ Type | Name | description | Access
 --- | --- | --- | ---
 int32 | length | number of arguments passed with the call | Read and Write
 Array | values | the arguments passed with the call | Read and Write
+
+### DestructorFunction([self])
+
+#### **Description:**
+
+	the callback function used with destructors
+
+#### **Parameters:**
+
+Type | Name | description
+--- | --- | ---
+IDispatch | self | The IDispatch object containing the destructor
