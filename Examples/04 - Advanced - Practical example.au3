@@ -12,10 +12,6 @@ Func ErrFunc($oError)
 	ConsoleWrite("!>COM Error !"&@CRLF&"!>"&@TAB&"Number: "&Hex($oError.Number,8)&@CRLF&"!>"&@TAB&"Windescription: "&StringRegExpReplace($oError.windescription,"\R$","")&@CRLF&"!>"&@TAB&"Source: "&$oError.source&@CRLF&"!>"&@TAB&"Description: "&$oError.description&@CRLF&"!>"&@TAB&"Helpfile: "&$oError.helpfile&@CRLF&"!>"&@TAB&"Helpcontext: "&$oError.helpcontext&@CRLF&"!>"&@TAB&"Lastdllerror: "&$oError.lastdllerror&@CRLF&"!>"&@TAB&"Scriptline: "&$oError.scriptline&@CRLF)
 EndFunc ;==>ErrFunc
 
-#cs
-	This example will be better after destructor is added in a later version
-#ce
-
 _GDIPlus_Startup()
 
 $GUI = GUI("old title")
@@ -28,20 +24,16 @@ $GUI.graphics.DrawRect(10,10,$GUI.clientWidth-21,$GUI.clientHeight-21,$Pen).Fill
 
 Sleep(1000)
 
-$Brush.color(0xFFc3E3c3)
-
-$GUI.graphics.FillRect(15, 15, $GUI.clientWidth-30, $GUI.clientHeight-30, $Brush)
+$GUI.graphics.FillRect(15, 15, $GUI.clientWidth-30, $GUI.clientHeight-30, $Brush.color(0xFFc3E3c3))
 
 While 1
 	Sleep(10)
 WEnd
 
 Func _MyExit()
-	$Pen.Dispose
+	;remove object references to release resources and activate desctructors
 	$Pen=0
-	$Brush.Dispose
 	$Brush=0
-	$GUI.graphics(0)
 	$GUI=0
 	_GDIPlus_Shutdown()
 	Exit
@@ -61,8 +53,13 @@ Func GUI($title, $width = Default, $height = Default, $left = Default, $top = De
 	$IDispatch.__defineGetter("title", Wnd_title)
 	$IDispatch.__defineGetter("onExit", Wnd_onExit)
 	$IDispatch.__defineGetter("graphics", Wnd_graphics)
+	$IDispatch.__destructor(Wnd_Destructor)
 	$IDispatch.__lock
 	Return $IDispatch
+EndFunc
+
+Func Wnd_Destructor($oSelf)
+	$oSelf.graphics=0
 EndFunc
 
 Func Wnd_Show($oSelf)
@@ -132,22 +129,15 @@ Func Wnd_onExit($oSelf)
 EndFunc
 
 Func Wnd_graphics($oSelf)
-	If ($oSelf.arguments.length==1) Then
-		If Not IsObj($oSelf.val) Then Return SetError(1, 1, $oSelf.parent)
-		_GDIPlus_GraphicsDispose($oSelf.val.hwnd)
-		$oSelf.val=0
-		Return $oSelf.parent
-	EndIf
 	If Not IsObj($oSelf.val) Then
 		Local $IDispatch = IDispatch()
 		$IDispatch.hwnd = _GDIPlus_GraphicsCreateFromHWND($oSelf.parent.hwnd)
 		$IDispatch.__defineSetter("hwnd", PrivateProperty);PrivateProperty is defined in AutoItObject_Internal.au3
-		$IDispatch.parent = $oSelf.parent
 		$IDispatch.__defineSetter("parent", PrivateProperty);PrivateProperty is defined in AutoItObject_Internal.au3
 		$IDispatch.__defineGetter("Clear", Graphics_Clear)
-		$IDispatch.__defineGetter("Dispose", Graphics_Dispose)
 		$IDispatch.__defineGetter("DrawRect", Graphics_DrawRect)
 		$IDispatch.__defineGetter("FillRect", Graphics_FillRect)
+		$IDispatch.__destructor(Graphics_Dispose)
 		$IDispatch.__lock
 		$oSelf.val = $IDispatch
 		Return $IDispatch
@@ -161,8 +151,7 @@ Func Graphics_Clear($oSelf)
 EndFunc
 
 Func Graphics_Dispose($oSelf)
-	$oSelf.parent.parent.graphics(0)
-	Return SetError(@error, @extended, 1)
+	_GDIPlus_GraphicsDispose($oSelf.hwnd)
 EndFunc
 
 Func Graphics_DrawRect($oSelf)
@@ -181,7 +170,7 @@ Func Pen($color=Default, $width=Default)
 	$IDispatch.hwnd = _GDIPlus_PenCreate($color, $width)
 	$IDispatch.__defineSetter("hwnd", PrivateProperty);PrivateProperty is defined in AutoItObject_Internal.au3
 	$IDispatch.__defineGetter("color", Pen_color)
-	$IDispatch.__defineGetter("Dispose", Pen_Dispose)
+	$IDispatch.__destructor(Pen_Dispose)
 	$IDispatch.__lock
 	Return $IDispatch
 EndFunc
@@ -193,8 +182,7 @@ Func Pen_color($oSelf)
 EndFunc
 
 Func Pen_Dispose($oSelf)
-	_GDIPlus_PenDispose($oSelf.parent.hwnd)
-	Return SetError(@error, @extended, $oSelf.parent)
+	_GDIPlus_PenDispose($oSelf.hwnd)
 EndFunc
 
 Func Brush($color=Default)
@@ -202,7 +190,7 @@ Func Brush($color=Default)
 	$IDispatch.hwnd = _GDIPlus_BrushCreateSolid($color)
 	$IDispatch.__defineSetter("hwnd", PrivateProperty);PrivateProperty is defined in AutoItObject_Internal.au3
 	$IDispatch.__defineGetter("color", Brush_color)
-	$IDispatch.__defineGetter("Dispose", Brush_Dispose)
+	$IDispatch.__destructor(Brush_Dispose)
 	$IDispatch.__lock
 	Return $IDispatch
 EndFunc
@@ -214,6 +202,5 @@ Func Brush_color($oSelf)
 EndFunc
 
 Func Brush_Dispose($oSelf)
-	_GDIPlus_BrushDispose($oSelf.parent.hwnd)
-	Return SetError(@error, @extended, $oSelf.parent)
+	_GDIPlus_BrushDispose($oSelf.hwnd)
 EndFunc
