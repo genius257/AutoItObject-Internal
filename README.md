@@ -2,7 +2,7 @@
 Provides easy object creation via IDispatch interface.
 
 **Example**
-```
+```AutoIt
 #include "AutoItObject_Internal.au3"
 $myCar = IDispatch()
 $myCar.make = 'Ford'
