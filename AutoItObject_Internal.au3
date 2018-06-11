@@ -8,31 +8,43 @@
 #include <Memory.au3>
 #include <WinAPISys.au3>
 
-Global Const $IID_IUnknown = "{00000000-0000-0000-C000-000000000046}"
-Global Const $IID_IDispatch = "{00020400-0000-0000-C000-000000000046}"
-Global Const $IID_IConnectionPointContainer = "{B196B284-BAB4-101A-B69C-00AA00341D07}"
+If Not IsDeclared("IID_IUnknown")                  Then Global Const $IID_IUnknown =                  "{00000000-0000-0000-C000-000000000046}"
+If Not IsDeclared("IID_IDispatch")                 Then Global Const $IID_IDispatch =                 "{00020400-0000-0000-C000-000000000046}"
+If Not IsDeclared("IID_IConnectionPointContainer") Then Global Const $IID_IConnectionPointContainer = "{B196B284-BAB4-101A-B69C-00AA00341D07}"
 
-Global Const $DISPATCH_METHOD = 1
-Global Const $DISPATCH_PROPERTYGET = 2
-Global Const $DISPATCH_PROPERTYPUT = 4
-Global Const $DISPATCH_PROPERTYPUTREF = 8
+If Not IsDeclared("DISPATCH_METHOD")               Then Global Const $DISPATCH_METHOD =               1
+If Not IsDeclared("DISPATCH_PROPERTYGET")          Then Global Const $DISPATCH_PROPERTYGET =          2
+If Not IsDeclared("DISPATCH_PROPERTYPUT")          Then Global Const $DISPATCH_PROPERTYPUT =          4
+If Not IsDeclared("DISPATCH_PROPERTYPUTREF")       Then Global Const $DISPATCH_PROPERTYPUTREF =       8
 
-Global Const $DISP_E_UNKNOWNINTERFACE = 0x80020001
-Global Const $DISP_E_MEMBERNOTFOUND = 0x80020003
-Global Const $DISP_E_PARAMNOTFOUND = 0x80020004
-Global Const $DISP_E_TYPEMISMATCH = 0x80020005
-Global Const $DISP_E_UNKNOWNNAME = 0x80020006
-Global Const $DISP_E_NONAMEDARGS = 0x80020007
-Global Const $DISP_E_BADVARTYPE = 0x80020008
-Global Const $DISP_E_EXCEPTION = 0x80020009
-Global Const $DISP_E_OVERFLOW = 0x8002000A
-Global Const $DISP_E_BADINDEX = 0x8002000B
-Global Const $DISP_E_UNKNOWNLCID = 0x8002000C
-Global Const $DISP_E_ARRAYISLOCKED = 0x8002000D
-Global Const $DISP_E_BADPARAMCOUNT = 0x8002000E
-Global Const $DISP_E_PARAMNOTOPTIONAL = 0x8002000F
-Global Const $DISP_E_BADCALLEE = 0x80020010
-Global Const $DISP_E_NOTACOLLECTION = 0x80020011
+If Not IsDeclared("S_OK")                          Then Global Const $S_OK =                          0x00000000
+If Not IsDeclared("E_NOTIMPL")                     Then Global Const $E_NOTIMPL =                     0x80004001
+If Not IsDeclared("E_NOINTERFACE")                 Then Global Const $E_NOINTERFACE =                 0x80004002
+If Not IsDeclared("E_POINTER")                     Then Global Const $E_POINTER =                     0x80004003
+If Not IsDeclared("E_ABORT")                       Then Global Const $E_ABORT =                       0x80004004
+If Not IsDeclared("E_FAIL")                        Then Global Const $E_FAIL =                        0x80004005
+If Not IsDeclared("E_ACCESSDENIED")                Then Global Const $E_ACCESSDENIED =                0x80070005
+If Not IsDeclared("E_HANDLE")                      Then Global Const $E_HANDLE =                      0x80070006
+If Not IsDeclared("E_OUTOFMEMORY")                 Then Global Const $E_OUTOFMEMORY =                 0x8007000E
+If Not IsDeclared("E_INVALIDARG")                  Then Global Const $E_INVALIDARG =                  0x80070057
+If Not IsDeclared("E_UNEXPECTED")                  Then Global Const $E_UNEXPECTED =                  0x8000FFFF
+
+If Not IsDeclared("DISP_E_UNKNOWNINTERFACE")       Then Global Const $DISP_E_UNKNOWNINTERFACE =       0x80020001
+If Not IsDeclared("DISP_E_MEMBERNOTFOUND")         Then Global Const $DISP_E_MEMBERNOTFOUND =         0x80020003
+If Not IsDeclared("DISP_E_PARAMNOTFOUND")          Then Global Const $DISP_E_PARAMNOTFOUND =          0x80020004
+If Not IsDeclared("DISP_E_TYPEMISMATCH")           Then Global Const $DISP_E_TYPEMISMATCH =           0x80020005
+If Not IsDeclared("DISP_E_UNKNOWNNAME")            Then Global Const $DISP_E_UNKNOWNNAME =            0x80020006
+If Not IsDeclared("DISP_E_NONAMEDARGS")            Then Global Const $DISP_E_NONAMEDARGS =            0x80020007
+If Not IsDeclared("DISP_E_BADVARTYPE")             Then Global Const $DISP_E_BADVARTYPE =             0x80020008
+If Not IsDeclared("DISP_E_EXCEPTION")              Then Global Const $DISP_E_EXCEPTION =              0x80020009
+If Not IsDeclared("DISP_E_OVERFLOW")               Then Global Const $DISP_E_OVERFLOW =               0x8002000A
+If Not IsDeclared("DISP_E_BADINDEX")               Then Global Const $DISP_E_BADINDEX =               0x8002000B
+If Not IsDeclared("DISP_E_UNKNOWNLCID")            Then Global Const $DISP_E_UNKNOWNLCID =            0x8002000C
+If Not IsDeclared("DISP_E_ARRAYISLOCKED")          Then Global Const $DISP_E_ARRAYISLOCKED =          0x8002000D
+If Not IsDeclared("DISP_E_BADPARAMCOUNT")          Then Global Const $DISP_E_BADPARAMCOUNT =          0x8002000E
+If Not IsDeclared("DISP_E_PARAMNOTOPTIONAL")       Then Global Const $DISP_E_PARAMNOTOPTIONAL =       0x8002000F
+If Not IsDeclared("DISP_E_BADCALLEE")              Then Global Const $DISP_E_BADCALLEE =              0x80020010
+If Not IsDeclared("DISP_E_NOTACOLLECTION")         Then Global Const $DISP_E_NOTACOLLECTION =         0x80020011
 
 Global Const $tagVARIANT = "ushort vt;ushort r1;ushort r2;ushort r3;PTR data;PTR data2"
 Global Const $tagDISPPARAMS = "ptr rgvargs;ptr rgdispidNamedArgs;dword cArgs;dword cNamedArgs;"
