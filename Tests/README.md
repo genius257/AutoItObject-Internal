@@ -1,1 +1,1 @@
-**Unit** and **Exporter** folders are a attempt to dublicate PHPUnit, but as functions only, as testing the object library with the obhject library seems like a bad idea.
+**Unit** and **Exporter** folders are a attempt to dublicate parts of PHPUnit, but as functions only, as testing the object library with itself seems like a bad idea.

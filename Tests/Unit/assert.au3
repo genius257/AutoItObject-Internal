@@ -1,10 +1,6 @@
 #include-once
 ; https://github.com/sebastianbergmann/phpunit/blob/7.2/src/Framework/Assert.php
 
-#cs
-	FIXME: implement https://github.com/sebastianbergmann/phpunit/blob/master/src/Framework/Constraint/LogicalNot.php
-	ref: https://github.com/sebastianbergmann/phpunit/blob/7.2/src/Framework/Assert.php#L1282
-#ce
 Global $Au3UnitAssertCount = 0
 
 #include "Constraint\Constraint.au3"
@@ -18,41 +14,45 @@ Func assertThat($value, $constraint, $message = "", $line = @ScriptLineNumber, $
 	Return SetError(@error)
 EndFunc
 
-Func assertObjectHasAttribute($attributeName, $object, $message = "")
+; Func assertObjectHasAttribute($attributeName, $object, $message = "")
 	;
-EndFunc
+; EndFunc
 
+#include "Constraint\IsEqual.au3"
 Func assertEquals($expected, $actual, $message = "", $line = @ScriptLineNumber)
 	assertThat($actual, "IsEqual", $message, $line, $expected)
 EndFunc
 
-Func assertNotEquals($expected, $actual, $message = "")
-
+Func assertNotEquals($expected, $actual, $message = "", $line = @ScriptLineNumber)
+	Local $passedToContraint = ["IsEqual", $expected]
+	assertThat($actual, "LogicalNot", $message, $line, $passedToContraint)
 EndFunc
 
-Func assertFalse($condition, $message = "")
-
+#include "Constraint\IsFalse.au3"
+Func assertFalse($condition, $message = "", $line = @ScriptLineNumber)
+	assertThat($condition, "IsFalse", $message, $line, $condition)
 EndFunc
 
-Func assertNotFalse($condition, $message)
-
+Func assertNotFalse($condition, $message = "", $line = @ScriptLineNumber)
+	Local $passedToContraint = ["IsFalse", $condition]
+	assertThat($condition, "LogicalNot", $message, $line, $passedToContraint)
 EndFunc
 
-Func assertGreaterThan($expected, $actual, $message = "")
+; Func assertGreaterThan($expected, $actual, $message = "")
 
-EndFunc
+; EndFunc
 
-Func assertGreaterThanOrEqual($expected, $actual, $message = "")
+; Func assertGreaterThanOrEqual($expected, $actual, $message = "")
 
-EndFunc
+; EndFunc
 
-Func assertInfinite($variable, $message = "")
+; Func assertInfinite($variable, $message = "")
 
-EndFunc
+; EndFunc
 
-Func assertFinite($variable, $message = "")
+; Func assertFinite($variable, $message = "")
 
-EndFunc
+; EndFunc
 
 #include "Constraint\IsIdentical.au3"
 Func assertInternalType($expected, $actual, $message = "", $line = @ScriptLineNumber)
@@ -65,13 +65,13 @@ Func assertNotInternalType($expected, $actual, $message = "", $line = @ScriptLin
 	assertThat($actual, "LogicalNot", $message, $line, $passedToContraint)
 EndFunc
 
-Func assertLessThan($expected, $actual, $message = "")
+; Func assertLessThan($expected, $actual, $message = "")
 
-EndFunc
+; EndFunc
 
-Func assertLessThanOrEqual($expected, $actual, $message = "")
+; Func assertLessThanOrEqual($expected, $actual, $message = "")
 
-EndFunc
+; EndFunc
 
 #include "Constraint\IsNull.au3"
 Func assertNull($actual, $message = "", $line = @ScriptLineNumber)
@@ -116,10 +116,12 @@ Func assertStringStartsNotWith($prefix, $string, $message = "")
 
 EndFunc
 #ce
-Func assertTrue($condition, $message = "")
-	assertThat($condition, "IsTrue", $message)
+#include "Constraint\IsTrue.au3"
+Func assertTrue($condition, $message = "", $line = @ScriptLineNumber)
+	assertThat($condition, "IsTrue", $message, $line, $condition)
 EndFunc
 
-Func assertNotTrue($condition, $message)
-
+Func assertNotTrue($condition, $message = "", $line = @ScriptLineNumber)
+	Local $passedToContraint = ["IsTrue", $condition]
+	assertThat($condition, "LogicalNot", $message, $line, $passedToContraint)
 EndFunc

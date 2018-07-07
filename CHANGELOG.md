@@ -5,10 +5,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.0.0] - 2017-07-07
 ### Added
 - This CHANGELOG.md file
 - CONTRIBUTING.md file
 - Tests
+- __get
+- __set
+- __assign
+- __freeze
+- __isFrozen
+- __isSealed
+- __preventExtensions
+- __isExtensible
+- __lookupGetter
+- __lookupSetter
+- __seal
+- __case
+- internal use function __AOI_PropertyGetFromName
+- internal use function __AOI_PropertyGetFromId
+- internal use function __AOI_PropertyCreate
+- internal use function __AOI_GetPtrOffset
+- internal use function __AOI_GetPtrValue
+
+### Changed
+- Moved project to it's own repository
+- __defineGetter and __defineSetter now also supports strings as second argument
+- __destructor now also supports strings as first argument
+- Split docs from readme into /docs/index.md
+- documentation blocks are now following a more standardized docblock standard.
+
+### Removed
+- __lock
+
+### Fixed
+- desctructor pointer wrong offset after lock propterty was added to the object structure.
 
 ## [1.0.3] - 2017-08-11
 ### Added

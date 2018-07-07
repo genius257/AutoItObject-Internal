@@ -54,7 +54,7 @@ Func GUI($title, $width = Default, $height = Default, $left = Default, $top = De
 	$IDispatch.__defineGetter("onExit", Wnd_onExit)
 	$IDispatch.__defineGetter("graphics", Wnd_graphics)
 	$IDispatch.__destructor(Wnd_Destructor)
-	$IDispatch.__lock
+	$IDispatch.__preventExtensions
 	Return $IDispatch
 EndFunc
 
@@ -138,7 +138,7 @@ Func Wnd_graphics($oSelf)
 		$IDispatch.__defineGetter("DrawRect", Graphics_DrawRect)
 		$IDispatch.__defineGetter("FillRect", Graphics_FillRect)
 		$IDispatch.__destructor(Graphics_Dispose)
-		$IDispatch.__lock
+		$IDispatch.__preventExtensions
 		$oSelf.val = $IDispatch
 		Return $IDispatch
 	EndIf
@@ -171,7 +171,7 @@ Func Pen($color=Default, $width=Default)
 	$IDispatch.__defineSetter("hwnd", PrivateProperty);PrivateProperty is defined in AutoItObject_Internal.au3
 	$IDispatch.__defineGetter("color", Pen_color)
 	$IDispatch.__destructor(Pen_Dispose)
-	$IDispatch.__lock
+	$IDispatch.__preventExtensions
 	Return $IDispatch
 EndFunc
 
@@ -191,7 +191,7 @@ Func Brush($color=Default)
 	$IDispatch.__defineSetter("hwnd", PrivateProperty);PrivateProperty is defined in AutoItObject_Internal.au3
 	$IDispatch.__defineGetter("color", Brush_color)
 	$IDispatch.__destructor(Brush_Dispose)
-	$IDispatch.__lock
+	$IDispatch.__preventExtensions
 	Return $IDispatch
 EndFunc
 
