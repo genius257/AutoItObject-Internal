@@ -531,17 +531,16 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 		EndIf
 
 		If ($dispIdMember=-8) Then;__keys
-			Local $aKeys[1]
+			Local $aKeys[0]
 			Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
 			While 1
 				If $pProperty=0 Then ExitLoop
 				Local $tProperty = DllStructCreate($tagProperty, $pProperty)
+				ReDim $aKeys[UBound($aKeys,1)+1]
 				$aKeys[UBound($aKeys,1)-1] = DllStructGetData(DllStructCreate("WCHAR["&_WinAPI_StrLen($tProperty.Name)&"]", $tProperty.Name), 1)
 				If $tProperty.next=0 Then ExitLoop
-				ReDim $aKeys[UBound($aKeys,1)+1]
 				$pProperty = $tProperty.next
 			WEnd
-			If $pProperty=0 Then Return $S_OK
 			Local $oIDispatch = IDispatch()
 			$oIDispatch.a=$aKeys
 			VariantClear($pVarResult)
