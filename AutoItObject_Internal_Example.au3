@@ -1,4 +1,3 @@
-#include <WINAPI.au3>
 #include "AutoItObject_Internal.au3"
 
 ;~ #AutoIt3Wrapper_UseX64=Y
