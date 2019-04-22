@@ -32,7 +32,7 @@ MsgBox(0, "", "a: "&$oItem.a&@CRLF&"b: "&$oItem.b&@CRLF&"c: "&$oItem.c&@CRLF&"ab
 $oItem.f = MsgBox
 Call($oItem.f,0,"","test")
 
-$oItem.__lock();locking the object
+$oItem.__freeze();locking the object
 
 $oItem.z = "z"; this will fail because of lock, see console. Also @error is set to non zero
 
