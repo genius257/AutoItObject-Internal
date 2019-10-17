@@ -23,7 +23,7 @@ MsgBox(0, "", $myCar.DisplayCar)
 
 ## Comparing AutoItObject Internal to AutoItObject UDF
 
-| Feature | AutoItObject-Internal | AutoItObject UDF | OOPEAu3 |
+| Feature | AutoItObject-Internal | [AutoItObject UDF](https://www.autoitscript.com/forum/topic/110379-autoitobject-udf/) | [OOPEAu3](https://github.com/turbo/OOPEAu3) |
 | - | - | - | - |
 | getters | :heavy_check_mark: | :x: | :x: |
 | setters | :heavy_check_mark: | :x: | :x: |
