@@ -23,17 +23,19 @@ MsgBox(0, "", $myCar.DisplayCar)
 
 ## Comparing AutoItObject Internal to AutoItObject UDF
 
-| Feature | AutoItObject-Internal | AutoItObject UDF |
-| - | - | - |
-| getters | ✔ | ❌ |
-| setters | ✔ | ❌ |
-| destructors | ✔⚠️¹ | ✔ |
-| inheritance | ✔⚠️² | ✔ |
-| supports all au3 var types | ✔ | ❌ |
-| native windows dlls and AutoIt only | ✔ | ❌ |
-| dynamic number of method parameters | ✔ | ❌ |
-| extending/editing UDF object logic | AutoIt | c++ |
+| Feature | AutoItObject-Internal | AutoItObject UDF | OOPEAu3 |
+| - | - | - | - |
+| getters | :heavy_check_mark: | :x: | :x: |
+| setters | :heavy_check_mark: | :x: | :x: |
+| destructors | :heavy_check_mark::warning:¹ | :heavy_check_mark: | :question: |
+| inheritance | :heavy_check_mark::warning:² | :heavy_check_mark: | :x: |
+| supports all au3 var types | :heavy_check_mark: | :x: | :x: |
+| native windows dlls and AutoIt only | :heavy_check_mark: | :x: | :heavy_check_mark: |
+| dynamic number of method parameters | :heavy_check_mark: | :x: | :white_check_mark:³ |
+| extending/editing UDF object logic | AutoIt | c++ | AutoIt |
 
  ¹ destructors are not triggered on script shutdown. 
  
  ² this is done by using the __assign method see https://github.com/genius257/AutoItObject-Internal/issues/1
+
+ ³ only for the constructor
