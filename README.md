@@ -31,7 +31,7 @@ MsgBox(0, "", $myCar.DisplayCar)
 | inheritance | :heavy_check_mark::warning:² | :heavy_check_mark: | :x: |
 | supports all au3 var types | :heavy_check_mark: | :x: | :x: |
 | native windows dlls and AutoIt only | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| dynamic number of method parameters | :heavy_check_mark: | :x: | :white_check_mark:³ |
+| dynamic number of method parameters | :heavy_check_mark: | :x: | :heavy_minus_sign:³ |
 | extending/editing UDF object logic | AutoIt | c++ | AutoIt |
 
  ¹ destructors are not triggered on script shutdown. 
