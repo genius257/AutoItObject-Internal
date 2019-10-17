@@ -21,7 +21,7 @@ MsgBox(0, "", $myCar.DisplayCar)
 >
 > This approach was chosen for it's ease of use and for developers to be able to "jump right in" without learning a whole new syntax.
 
-## Comparing AutoItObject Internal to AutoItObject UDF
+## Comparing AutoItObject Internal to Other options
 
 | Feature | AutoItObject-Internal | [AutoItObject UDF](https://www.autoitscript.com/forum/topic/110379-autoitobject-udf/) | [OOPEAu3](https://github.com/turbo/OOPEAu3) |
 | - | - | - | - |
