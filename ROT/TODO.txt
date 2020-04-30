@@ -1,0 +1,3 @@
+__destructor
+	must be unavailable after __lock
+	must throw exception if method @error<>0
