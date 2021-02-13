@@ -33,6 +33,7 @@ Func ErrFunc($oError)
 EndFunc ;==>ErrFunc
 
 $IDispatch = IDispatch(QueryInterface2, AddRef2, Release2, GetTypeInfoCount2, GetTypeInfo2, GetIDsOfNames2, Invoke2)
+Release(Ptr($IDispatch)); tmp fix for master branch bug, where initial count is 2, should be 1
 
 Func Getter($o)
 	Return SetError(0x000010D2, 0, 0); ERROR_EMPTY
@@ -40,10 +41,13 @@ Func Getter($o)
 EndFunc
 
 $IDispatch.name = "my name is Danny"
-$IRunningObjectTable = DllCall("Ole32.dll","LONG","GetRunningObjectTable","DWORD",0,"PTR*",0)
+$IRunningObjectTable = DllCall("Ole32.dll", "LONG", "GetRunningObjectTable", "DWORD", 0, "PTR*", 0)
 If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
 $IRunningObjectTable = ObjCreateInterface($IRunningObjectTable[2],$IID_IRunningObjectTable,"Register HRESULT(DWORD;PTR;PTR;DWORD*);Revoke HRESULT(DWORD);IsRunning HRESULT(PTR*);GetObject HRESULT(PTR;PTR*);NoteChangeTime HRESULT(DWORD;PTR*);GetTimeOfLastChange HRESULT(PTR*;PTR*);EnumRunning HRESULT(PTR*);",True)
 If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
+
+;$IDispatch = 0
+;Exit
 
 $sCLSID="AutoIt.COMDemo"
 $IMoniker=DllCall("Ole32.dll", "LONG", "CreateFileMoniker", "WSTR", $sCLSID, "PTR*", 0)
@@ -53,11 +57,9 @@ If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
 Global Const $ROTFLAGS_REGISTRATIONKEEPSALIVE=0x01
 Global Const $ROTFLAGS_ALLOWANYCLIENT=0x02
 
-AddRef(Ptr($IDispatch))
-
 $dwRegister=0
 ConsoleWrite("Before $IRunningObjectTable.Register"&@CRLF)
-;~ $r=$IRunningObjectTable.Register( $ROTFLAGS_REGISTRATIONKEEPSALIVE, ptr($IDispatch), $IMoniker[2], $dwRegister ) ; use this to allow multiple use for now
+;$r=$IRunningObjectTable.Register( $ROTFLAGS_REGISTRATIONKEEPSALIVE, ptr($IDispatch), $IMoniker[2], $dwRegister ) ; use this to allow multiple use for now
 $r=$IRunningObjectTable.Register( 0, ptr($IDispatch), $IMoniker[2], $dwRegister )
 ;~ MsgBox(0, "$IRunningObjectTable.Register", $r)
 If @error<>0 Then Exit 1
@@ -68,12 +70,6 @@ EndIf
 ConsoleWrite("After $IRunningObjectTable.Register"&@CRLF)
 
 $IMoniker = ObjCreateInterface($IMoniker[2], $IID_IMoniker)
-
-;~ ConsoleWrite("BeforePadding"&@CRLF);adding extra count, to prevent miscount if object is used before release from ROT
-;~ AddRef(Ptr($IDispatch))
-;~ AddRef(Ptr($IDispatch))
-;~ AddRef(Ptr($IDispatch));TODO: look into RunningObjectTable calling IUnknown:Release 3 times if used one or more times, but only once if not used before release @.@
-;~ ConsoleWrite("AfterPadding"&@CRLF)
 
 $IMoniker=0
 
@@ -229,8 +225,17 @@ Func QueryInterface2($pSelf, $pRIID, $pObj)
 	Static $IConnectionPointContainer=0
 	Local $sGUID=DllCall("ole32.dll", "int", "StringFromGUID2", "PTR", $pRIID, "wstr", "", "int", 40)[2]
 	ConsoleWrite("["&@ScriptLineNumber&"]: QueryInterface - "&$sGUID&@CRLF)
+	If Not (($sGUID = "{00000000-0000-0000-C000-000000000046}") Or ($sGUID = "{00020400-0000-0000-C000-000000000046}")) Then
+		Local $tStruct = DllStructCreate("ptr", $pObj)
+		DllStructSetData($tStruct, 1, 0)
+		Return $E_NOINTERFACE
+	EndIf
 	Local $_ = QueryInterface($pSelf, $pRIID, $pObj)
 	ConsoleWrite("QueryInterface: "&$_&@CRLF)
+	If $_ = $S_OK Then
+		AddRef($pSelf)
+	EndIf
+	Return $_
 ;~ 	If $sGUID="{4C1E39E1-E3E3-4296-AA86-EC938D896E92}" Then Return $S_OK ;more problems
 	If $sGUID = $IID_IConnectionPointContainer Then
 		If $IConnectionPointContainer=0 Then
@@ -346,5 +351,6 @@ Func Invoke2($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRe
 EndFunc
 
 Func RefCount()
-	ConsoleWrite( DllStructGetData(DllStructCreate("int Ref", Ptr($IDispatch)-8), 1) & @CRLF )
+	Local Static $pIDispatch = Ptr($IDispatch)
+	ConsoleWrite( DllStructGetData(DllStructCreate("int Ref", $pIDispatch-8), 1) & @CRLF )
 EndFunc
