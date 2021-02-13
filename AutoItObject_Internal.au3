@@ -135,7 +135,7 @@ Func Release($pSelf)
 	Local $i
 	Local $tStruct = DllStructCreate("int Ref", $pSelf-8)
 	$tStruct.Ref -= 1
-	If $tStruct.Ref == 0 Then; initiate garbage collection
+	If $tStruct.Ref = 0 Then; initiate garbage collection
 		Local $pDescructor = DllStructGetData(DllStructCreate("PTR", $pSelf + __AOI_GetPtrOffset("__destructor")),1)
 		If Not ($pDescructor=0) Then;TODO
 			Local $tVARIANT = DllStructCreate($tagVARIANT, $pDescructor)
@@ -234,6 +234,8 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 			DllStructSetData($tIds, 1, -18)
 		Case "__set"
 			DllStructSetData($tIds, 1, -19)
+		Case "__has"
+			DllStructSetData($tIds, 1, -20)
 		Case Else
 			DllStructSetData($tIds, 1, -1)
 	EndSwitch
@@ -245,7 +247,7 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 	Local $iID = @error<>0?-1:@extended
 	Local $iIndex = @extended
 
-	If ($iID==-1) And BitAND($iLock, $__AOI_LOCK_CREATE)=0 Then
+	If ($iID=-1) And BitAND($iLock, $__AOI_LOCK_CREATE)=0 Then
 		Local $pData = __AOI_PropertyCreate(DllStructGetData($t_rgszNames, 1))
 		If $iIndex=-1 Then;first item in list
 			DllStructSetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")), 1, $pData)
@@ -256,7 +258,7 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 		$iID = $iIndex+1
 	EndIf
 
-	If $iID==-1 Then Return $DISP_E_UNKNOWNNAME
+	If $iID=-1 Then Return $DISP_E_UNKNOWNNAME
 	DllStructSetData($tIds, 1, $iID)
 	Return $S_OK
 EndFunc
@@ -333,7 +335,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			DllStructSetData($t, "str_ptr", $tDISPPARAMS.rgvargs)
 			$t.str_ptr = DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs), "data")
 			$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
-			If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) == $S_OK Then Return $DISP_E_EXCEPTION
+			If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) = $S_OK Then Return $DISP_E_EXCEPTION
 
 			$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
 			$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
@@ -353,7 +355,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			DllStructSetData($t, "str_ptr", $tDISPPARAMS.rgvargs)
 			$t.str_ptr = DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs), "data")
 			$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
-			If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) == $S_OK Then Return $DISP_E_EXCEPTION
+			If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) = $S_OK Then Return $DISP_E_EXCEPTION
 
 			$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
 			$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
@@ -380,7 +382,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			Local $iID, $iIndex, $pData
 			For $i=$tDISPPARAMS.cArgs-1 To 0 Step -1
 				$tVARIANT=DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+$iVARIANT*$i)
-				If Not (DllStructGetData($tVARIANT, "vt")==$VT_DISPATCH) Then Return $DISP_E_BADVARTYPE
+				If Not (DllStructGetData($tVARIANT, "vt")=$VT_DISPATCH) Then Return $DISP_E_BADVARTYPE
 				$pExternalProperty = __AOI_GetPtrValue(DllStructGetData($tVARIANT, "data") + __AOI_GetPtrOffset("Properties"), "ptr")
 				While 1
 					If $pExternalProperty = 0 Then ExitLoop
@@ -390,7 +392,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 					$iID = @error<>0?-1:@extended
 					$iIndex = @extended
 
-					If ($iID==-1) Then
+					If ($iID=-1) Then
 						$pData = __AOI_PropertyCreate(_WinAPI_GetString($tExternalProperty.Name))
 						$tProperty = DllStructCreate($tagProperty, $pData)
 						VariantClear($tProperty.Variant)
@@ -460,12 +462,27 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			Return Invoke($pSelf, $t.id, $riid, $lcid, $DISPATCH_PROPERTYPUT, $pDispParams, $pVarResult, $pExcepInfo, $puArgErr)
 		EndIf
 
+		If $dispIdMember=-20 Then;__has
+			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
+			If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
+			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
+			If $tVARIANT.vt<>$VT_BSTR Then Return $DISP_E_BADVARTYPE
+			Local $sProperty = _WinAPI_GetString($tVARIANT.data);the string to search for
+			$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
+			$tVARIANT.vt = $VT_BOOL
+			Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+			Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
+			Local $pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("Properties"), "ptr"), $sProperty, $bCase)
+			$tVARIANT.data = @error<>0?0:1
+			Return $S_OK
+		EndIf
+
 		If $dispIdMember=-16 Then;__destructor
 			Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
 			If BitAND($iLock, $__AOI_LOCK_CREATE)>0 Then Return $DISP_E_EXCEPTION
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
-			If (Not (DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs),"vt")==$VT_RECORD)) And (Not (DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs),"vt")==$VT_BSTR)) Then Return $DISP_E_BADVARTYPE
+			If (Not (DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs),"vt")=$VT_RECORD)) And (Not (DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs),"vt")=$VT_BSTR)) Then Return $DISP_E_BADVARTYPE
 			Local $tVARIANT = DllStructCreate($tagVARIANT)
 			Local $pVARIANT = MemCloneGlob($tVARIANT)
 			$tVARIANT = DllStructCreate($tagVARIANT, $pVARIANT)
@@ -506,15 +523,15 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
 			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-			If Not($VT_BSTR==$tVARIANT.vt) Then Return $DISP_E_BADVARTYPE
+			If Not($VT_BSTR=$tVARIANT.vt) Then Return $DISP_E_BADVARTYPE
 			Local $sProperty = _WinAPI_GetString($tVARIANT.data);the string to search for
 			Local $tProperty=0,$tProperty_Prev
 			While 1
 				If $pProperty=0 Then ExitLoop
 				$tProperty_Prev = $tProperty
 				$tProperty = DllStructCreate($tagProperty, $pProperty)
-				If _WinAPI_GetString($tProperty.Name)==$sProperty Then
-					If $tProperty_Prev==0 Then
+				If _WinAPI_GetString($tProperty.Name)==$sProperty Then;FIXME: this if statement does not handle the __case object setting
+					If $tProperty_Prev=0 Then
 						DllStructSetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")), 1, $tProperty.Next)
 					Else
 						$tProperty_Prev.Next = $tProperty.next
@@ -556,9 +573,9 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			If $tDISPPARAMS.cArgs<>2 Then Return $DISP_E_BADPARAMCOUNT
 			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-			If Not (($tVARIANT.vt==$VT_RECORD) Or ($tVARIANT.vt==$VT_BSTR)) Then Return $DISP_E_BADVARTYPE
+			If Not (($tVARIANT.vt=$VT_RECORD) Or ($tVARIANT.vt=$VT_BSTR)) Then Return $DISP_E_BADVARTYPE
 			Local $tVARIANT2 = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize($tVARIANT))
-			If Not ($tVARIANT2.vt==$VT_BSTR) Then Return $DISP_E_BADVARTYPE
+			If Not ($tVARIANT2.vt=$VT_BSTR) Then Return $DISP_E_BADVARTYPE
 
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			$t = DllStructCreate("ptr id_ptr;long id;ptr str_ptr_ptr;ptr str_ptr")
@@ -590,9 +607,9 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			If $tDISPPARAMS.cArgs<>2 Then Return $DISP_E_BADPARAMCOUNT
 			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-			If Not (($tVARIANT.vt==$VT_RECORD) Or ($tVARIANT.vt==$VT_BSTR)) Then Return $DISP_E_BADVARTYPE
+			If Not (($tVARIANT.vt=$VT_RECORD) Or ($tVARIANT.vt=$VT_BSTR)) Then Return $DISP_E_BADVARTYPE
 			Local $tVARIANT2 = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+DllStructGetSize($tVARIANT))
-			If Not ($tVARIANT2.vt==$VT_BSTR) Then Return $DISP_E_BADVARTYPE
+			If Not ($tVARIANT2.vt=$VT_BSTR) Then Return $DISP_E_BADVARTYPE
 
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			$t = DllStructCreate("ptr id_ptr;long id;ptr str_ptr_ptr;ptr str_ptr")
@@ -824,7 +841,7 @@ Func __AOI_PropertyGetFromName($pProperty, $sName, $bCase = True)
 		If $tProperty.next=0 Then ExitLoop
 		$pProperty = $tProperty.next
 	WEnd
-	If $iID==-1 Then Return SetError(1, $iIndex, $pProperty)
+	If $iID=-1 Then Return SetError(1, $iIndex, $pProperty)
 	Return SetError(0, $iID, $pProperty)
 EndFunc
 
