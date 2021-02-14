@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- __has
+
+### Changed
+- output of __keys() will now always return array
+- value comparison operators for non string data now wont be type juggled to string
+
+### Fixed
+- QueryInterface did not call AddRef when returning valid pointer
+- __unset did not handle as case insensitive if case insensitive mode was on
 
 ## [2.0.0] - 2018-07-07
 ### Added
