@@ -96,7 +96,7 @@ Func IDispatch($QueryInterface=QueryInterface, $AddRef=AddRef, $Release=Release,
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($Invoke), 7)
 	DllStructSetData($tObject, "Callbacks", $Invoke, 7)
 
-	DllStructSetData($tObject, "RefCount", 2) ; initial ref count is 1
+	DllStructSetData($tObject, "RefCount", 1) ; initial ref count is 1
 	DllStructSetData($tObject, "Size", 7) ; number of interface methods
 
 	Local $pData = MemCloneGlob($tObject)
@@ -116,6 +116,7 @@ Func QueryInterface($pSelf, $pRIID, $pObj)
 	If (Not ($sGUID=$IID_IDispatch)) And (Not ($sGUID=$IID_IUnknown)) Then Return $E_NOINTERFACE
 	Local $tStruct = DllStructCreate("ptr", $pObj)
 	DllStructSetData($tStruct, 1, $pSelf)
+	AddRef($pSelf)
 	Return $S_OK
 EndFunc
 
