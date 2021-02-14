@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - output of __keys() will now always return array
-- value comparison operators for non string data now wont be type juggled to string
+- value comparison operators for non string data now wont be type juggling values to strings
 
 ### Fixed
 - QueryInterface did not call AddRef when returning valid pointer
