@@ -531,7 +531,8 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 				If $pProperty=0 Then ExitLoop
 				$tProperty_Prev = $tProperty
 				$tProperty = DllStructCreate($tagProperty, $pProperty)
-				If _WinAPI_GetString($tProperty.Name)==$sProperty Then;FIXME: this if statement does not handle the __case object setting
+				Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
+				If ($bCase And _WinAPI_GetString($tProperty.Name)==$sProperty) Or ((Not $bCase) And _WinAPI_GetString($tProperty.Name)=$sProperty) Then;FIXME: this if statement does not handle the __case object setting
 					If $tProperty_Prev=0 Then
 						DllStructSetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")), 1, $tProperty.Next)
 					Else
