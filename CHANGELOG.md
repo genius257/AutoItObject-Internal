@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - QueryInterface did not call AddRef when returning valid pointer
 - __unset did not handle as case insensitive if case insensitive mode was on
+- Calling IDispatch object as function, would result in first element. Now property with key "" will be searched for. If not found in properties, object will throw exception for this special case!
 
 ## [2.0.0] - 2018-07-07
 ### Added
