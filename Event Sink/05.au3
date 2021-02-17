@@ -23,12 +23,6 @@ if Not IsDeclared("E_NOTIMPL") Then Global Const $E_NOTIMPL = 0x80004001
 
 #include "ITypeInfo.au3"
 
-$IID_IRunningObjectTable = "{00000010-0000-0000-C000-000000000046}"
-$IID_IMoniker = "{0000000f-0000-0000-C000-000000000046}"
-
-$IID_IConnectionPoint = "{B196B286-BAB4-101A-B69C-00AA00341D07}"
-$IID__DMSMQEventEvents = "{D7D6E078-DCCD-11d0-AA4B-0060970DEBAE}"
-
 $AutoItError = ObjEvent("AutoIt.Error", "ErrFunc") ; Install a custom error handler
 Func ErrFunc($oError)
 	ConsoleWrite("!>COM Error !"&@CRLF&"!>"&@TAB&"Number: "&Hex($oError.Number,8)&@CRLF&"!>"&@TAB&"Windescription: "&StringRegExpReplace($oError.windescription,"\R$","")&@CRLF&"!>"&@TAB&"Source: "&$oError.source&@CRLF&"!>"&@TAB&"Description: "&$oError.description&@CRLF&"!>"&@TAB&"Helpfile: "&$oError.helpfile&@CRLF&"!>"&@TAB&"Helpcontext: "&$oError.helpcontext&@CRLF&"!>"&@TAB&"Lastdllerror: "&$oError.lastdllerror&@CRLF&"!>"&@TAB&"Scriptline: "&$oError.scriptline&@CRLF)
@@ -49,7 +43,7 @@ $IDispatch = IDispatch(QueryInterface2, AddRef2, Release2, GetTypeInfoCount2, Ge
 ;~ DllCall("ole32.dll", "none", "CoUninitialize")
 ;~ DllCall("ole32.dll", "none", "CoUninitialize")
 ObjEvent($IDispatch, "_event0_", "Event0")
-MsgBox(0, "@error", @error)
+ConsoleWrite("0x"&Hex(@error)&@CRLF)
 ;~ ObjEvent($IDispatch, "_event1_", "Event1")
 ;~ ObjEvent($IDispatch, "_event2_", "Event2")
 ;~ $IDispatch.a = 1
@@ -62,82 +56,11 @@ MsgBox(0, "@error", @error)
 ;~ Sleep(1000)
 ;~ Sleep(1000)
 ;~ Sleep(1000)
-MsgBox(0, "", "DONE?")
 Exit
 
 Func Getter($o)
 	Return SetError(0x000010D2, 0, 0); ERROR_EMPTY
 ;~ 	Return 1
-EndFunc
-
-$IDispatch.name = "my name is Danny"
-$IRunningObjectTable = DllCall("Ole32.dll","LONG","GetRunningObjectTable","DWORD",0,"PTR*",0)
-If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
-$IRunningObjectTable = ObjCreateInterface($IRunningObjectTable[2],$IID_IRunningObjectTable,"Register HRESULT(DWORD;PTR;PTR;DWORD*);Revoke HRESULT(DWORD);IsRunning HRESULT(PTR*);GetObject HRESULT(PTR;PTR*);NoteChangeTime HRESULT(DWORD;PTR*);GetTimeOfLastChange HRESULT(PTR*;PTR*);EnumRunning HRESULT(PTR*);",True)
-If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
-
-$sCLSID="AutoIt.COMDemo"
-$IMoniker=DllCall("Ole32.dll", "LONG", "CreateFileMoniker", "WSTR", $sCLSID, "PTR*", 0)
-If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
-;~ $IMoniker = ObjCreateInterface($IMoniker[2], $IID_IMoniker, "GetClassID;IsDirty;Load;Save;GetSizeMax;BindToObject;BindToStorage;Reduce;ComposeWith;Enum;IsEqual;Hash;IsRunning;GetTimeOfLastChange;Inverse;CommonPrefixWith;RelativePathTo;GetDisplayName;ParseDisplayName;IsSystemMoniker")
-
-Global Const $ROTFLAGS_REGISTRATIONKEEPSALIVE=0x01
-Global Const $ROTFLAGS_ALLOWANYCLIENT=0x02
-
-AddRef(Ptr($IDispatch))
-
-$dwRegister=0
-ConsoleWrite("Before $IRunningObjectTable.Register"&@CRLF)
-;~ $r=$IRunningObjectTable.Register( $ROTFLAGS_REGISTRATIONKEEPSALIVE, ptr($IDispatch), $IMoniker[2], $dwRegister ) ; use this to allow multiple use for now
-$r=$IRunningObjectTable.Register( 0, ptr($IDispatch), $IMoniker[2], $dwRegister )
-;~ MsgBox(0, "$IRunningObjectTable.Register", $r)
-If @error<>0 Then Exit 1
-If $dwRegister=0 Then
-	MsgBox(0, "", _WinAPI_GetErrorMessage($r))
-	Exit 2
-EndIf
-ConsoleWrite("After $IRunningObjectTable.Register"&@CRLF)
-
-$IMoniker = ObjCreateInterface($IMoniker[2], $IID_IMoniker)
-
-;~ ConsoleWrite("BeforePadding"&@CRLF);adding extra count, to prevent miscount if object is used before release from ROT
-;~ AddRef(Ptr($IDispatch))
-;~ AddRef(Ptr($IDispatch))
-;~ AddRef(Ptr($IDispatch));TODO: look into RunningObjectTable calling IUnknown:Release 3 times if used one or more times, but only once if not used before release @.@
-;~ ConsoleWrite("AfterPadding"&@CRLF)
-
-$IMoniker=0
-
-$IRunningObjectTable=0
-
-Opt("GuiOnEventMode", 1)
-
-$hWnd=GUICreate("Title",700,320)
-
-GUICtrlCreateButton("Ref count", 10, 10, 100, 35)
-GUICtrlSetOnEvent(-1, "RefCount")
-GUICtrlCreateButton("Ref += 1", 10, 10+35+10, 100, 35)
-GUICtrlSetOnEvent(-1, "AddRef3")
-
-GUISetState(@SW_SHOW,$hWnd)
-
-GUISetOnEvent(-3, "_MyExit", $hWnd)
-
-While 1
-	Sleep(10)
-WEnd
-
-Func _MyExit()
-	Local $IRunningObjectTable = DllCall("Ole32.dll","LONG","GetRunningObjectTable","DWORD",0,"PTR*",0)
-	If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
-	$IRunningObjectTable = ObjCreateInterface($IRunningObjectTable[2],$IID_IRunningObjectTable,"Register HRESULT(DWORD;PTR;PTR;DWORD*);Revoke HRESULT(DWORD);IsRunning HRESULT(PTR*);GetObject HRESULT(PTR*;PTR**);NoteChangeTime HRESULT(DWORD;PTR*);GetTimeOfLastChange HRESULT(PTR*;PTR*);EnumRunning HRESULT(PTR*);",True)
-	If @error<>0 Then Exit MsgBox(0, @ScriptLineNumber, @error)
-
-	$IRunningObjectTable.Revoke($dwRegister)
-	ConsoleWrite("IRunningObjectTable.Revoke"&@CRLF)
-	$IRunningObjectTable=0
-	$IDispatch=0
-	Exit
 EndFunc
 
 #Region IConnectionPointContainer interface
@@ -302,6 +225,7 @@ Func QueryInterface2($pSelf, $pRIID, $pObj)
 		;TODO
 		Local $tStruct = DllStructCreate("ptr", $pObj)
 		DllStructSetData($tStruct, 1, $IConnectionPointContainer)
+		IConnectionPointContainer_AddRef($IConnectionPointContainer)
 		Return $S_OK
 	EndIf
 	Return $_
@@ -377,8 +301,4 @@ Func Invoke2($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRe
 	ConsoleWrite("pExcepInfo: "&$pExcepInfo&@CRLF);EXCEPTINFO structure
 	ConsoleWrite("Invoke: "&$_&@CRLF)
 	Return $_
-EndFunc
-
-Func RefCount()
-	ConsoleWrite( DllStructGetData(DllStructCreate("int Ref", Ptr($IDispatch)-8), 1) & @CRLF )
 EndFunc
