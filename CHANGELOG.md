@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- __has
+- __exists
 - _AOI_ROT_register
 - _AOI_ROT_revoke
 - Internal use function __AOI_ROT_GetRunningObjectTable
