@@ -33,7 +33,6 @@ Func ErrFunc($oError)
 EndFunc ;==>ErrFunc
 
 $IDispatch = IDispatch(QueryInterface2, AddRef2, Release2, GetTypeInfoCount2, GetTypeInfo2, GetIDsOfNames2, Invoke2)
-Release(Ptr($IDispatch)); tmp fix for master branch bug, where initial count is 2, should be 1
 
 Func Getter($o)
 	Return SetError(0x000010D2, 0, 0); ERROR_EMPTY
@@ -232,9 +231,6 @@ Func QueryInterface2($pSelf, $pRIID, $pObj)
 	EndIf
 	Local $_ = QueryInterface($pSelf, $pRIID, $pObj)
 	ConsoleWrite("QueryInterface: "&$_&@CRLF)
-	If $_ = $S_OK Then
-		AddRef($pSelf)
-	EndIf
 	Return $_
 ;~ 	If $sGUID="{4C1E39E1-E3E3-4296-AA86-EC938D896E92}" Then Return $S_OK ;more problems
 	If $sGUID = $IID_IConnectionPointContainer Then
