@@ -117,7 +117,7 @@ EndFunc
 
 Func ITypeLib_FindName($pSelf, $szNameBuf, $lHashVal, $ppTInfo, $rgMemId, $pcFound, $pBstrNameInLibrary)
 	ConsoleWrite("ITypeLib_FindName"&@CRLF)
-	ConsoleWrite("+> szNameBuf: "&_winapi_getstring($szNameBuf, True)&@CRLF)
+	ConsoleWrite("+> szNameBuf: "&_WinAPI_GetString($szNameBuf, True)&@CRLF)
 	ConsoleWrite("+> lHashVal: "&$lHashVal&@CRLF)
 	ConsoleWrite("+> pcFound: "&DllStructGetData(DllStructCreate("USHORT", $pcFound), 1)&@CRLF)
 ;~ 	Return $E_NOTIMPL
