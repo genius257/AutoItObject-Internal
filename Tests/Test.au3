@@ -235,8 +235,8 @@ Func testMethods()
 	$value = $oIDispatch.__keys
 	assertEquals(@error, 0)
 	assertEquals(UBound($value), 1)
-	$value = $oIDispatch.__has("a")
+	$value = $oIDispatch.__exists("a")
 	assertEquals($value, True)
-	$value = $oIDispatch.__has("A")
+	$value = $oIDispatch.__exists("A")
 	assertEquals($value, False)
 EndFunc

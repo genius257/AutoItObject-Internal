@@ -238,7 +238,7 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 			DllStructSetData($tIds, 1, -18)
 		Case "__set"
 			DllStructSetData($tIds, 1, -19)
-		Case "__has"
+		Case "__exists"
 			DllStructSetData($tIds, 1, -20)
 		Case Else
 			DllStructSetData($tIds, 1, -1)
@@ -473,7 +473,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			Return Invoke($pSelf, $t.id, $riid, $lcid, $DISPATCH_PROPERTYPUT, $pDispParams, $pVarResult, $pExcepInfo, $puArgErr)
 		EndIf
 
-		If $dispIdMember=-20 Then;__has
+		If $dispIdMember=-20 Then;__exists
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
 			$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
