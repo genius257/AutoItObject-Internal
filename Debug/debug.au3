@@ -7,9 +7,6 @@
     Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{00000000-0000-0000-C000-000000000046}
 #ce
 
-;MsgBox(0, "", RegRead("HKEY_LOCAL_MACHINE\SOFTWARE\Classes\Interface\{F2153260-232E-4474-9D0A-9F2AB153441D}", ""))
-;Exit
-
 $sIIDs = FileRead("iids.txt")
 
 $oIDispatch = IDispatch(QueryInterface2, AddRef2, Release2, GetTypeInfoCount2, GetTypeInfo2, GetIDsOfNames2, Invoke2)
