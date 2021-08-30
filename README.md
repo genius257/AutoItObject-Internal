@@ -32,6 +32,7 @@ MsgBox(0, "", $myCar.DisplayCar)
 | supports all au3 var types | :heavy_check_mark: | :x: | :x: |
 | native windows dlls and AutoIt only | :heavy_check_mark: | :x: | :heavy_check_mark: |
 | dynamic number of method parameters | :heavy_check_mark: | :x: | :heavy_minus_sign:³ |
+| registering objects in the ROT | :heavy_check_mark: | :heavy_check_mark: | :x: |
 | extending/editing UDF object logic | AutoIt | c++ | AutoIt |
 
  ¹ destructors are not triggered on script shutdown. 
