@@ -1,9 +1,3 @@
-#cs
-# AutoItObject Internal
-# @author genius257
-# @version 2.0.0
-#ce
-
 #include-once
 #include <Memory.au3>
 #include <WinAPISys.au3>
