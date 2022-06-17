@@ -185,9 +185,7 @@ EndFunc
 #ce
 Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 	Local $tIds = DllStructCreate("long", $rgDispId); 2,147,483,647 properties available to define, per object. And 2,147,483,647 private properties to set in the negative space, per object.
-	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
 	Local $tProperty = 0
-	Local $iSize2
 
 	Local $pStr = DllStructGetData(DllStructCreate("ptr", $rgszNames), 1)
 	Local $iSize = _WinAPI_StrLen($pStr, True)
@@ -323,7 +321,6 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 				DllStructSetData($tLock, 1, _
 					(Not $b) ? BitOR(DllStructGetData($tLock, 1), $__AOI_LOCK_CASE) : BitAND(DllStructGetData($tLock, 1), BitNOT(BitShift(1 , 0-(Log($__AOI_LOCK_CASE)/log(2))))) _
 				)
-
 			EndIf
 			Return $S_OK
 		ElseIf $dispIdMember=-13 Then;__lookupSetter
@@ -372,7 +369,6 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 
 			Local $tVARIANT = DllStructCreate($tagVARIANT)
 			Local $iVARIANT = DllStructGetSize($tVARIANT)
-			Local $i
 			Local $pExternalProperty, $tExternalProperty
 			Local $pProperty, $tProperty
 			Local $iID, $iIndex, $pData
@@ -664,7 +660,6 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			VariantCopy($pVarResult, $_tProperty.Variant)
 			$oIDispatch=0
 			Return ($iError<>0)?$DISP_E_EXCEPTION:$S_OK
-			Return $S_OK
 		EndIf
 
 		VariantCopy($pVarResult, $tVARIANT)
@@ -703,7 +698,6 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			VariantCopy($pVarResult, $_tProperty.Variant)
 			$oIDispatch=0
 			Return ($iError<>0)?$DISP_E_EXCEPTION:$S_OK
-			Return $S_OK
 		EndIf
 
 		Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
@@ -816,7 +810,6 @@ EndFunc
 #ce
 Func __AOI_PropertyGetFromId($pProperty, $iID)
 	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
-	Local $i
 	For $i=1 To $iID
 		$tProperty = DllStructCreate($tagProperty, $tProperty.Next)
 	Next
