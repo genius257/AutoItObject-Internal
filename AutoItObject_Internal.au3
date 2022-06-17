@@ -56,11 +56,11 @@ Global Enum $VT_EMPTY,$VT_NULL,$VT_I2,$VT_I4,$VT_R4,$VT_R8,$VT_CY,$VT_DATE,$VT_B
 	$VT_ARRAY=0x2000,$VT_BYREF=0x4000,$VT_RESERVED=0x8000,$VT_ILLEGAL=0xffff,$VT_ILLEGALMASKED=0xfff, _
 	$VT_TYPEMASK=0xfff
 
+Global Const $__AOI_tagObject = "int RefCount;int Size;ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties;BYTE lock;PTR __destructor"
 Global Const $tagProperty = "ptr Name;ptr Variant;ptr __getter;ptr __setter;ptr Next"
 
 Func IDispatch($QueryInterface=QueryInterface, $AddRef=AddRef, $Release=Release, $GetTypeInfoCount=GetTypeInfoCount, $GetTypeInfo=GetTypeInfo, $GetIDsOfNames=GetIDsOfNames, $Invoke=Invoke)
-	Local $tagObject = "int RefCount;int Size;ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties;BYTE lock;PTR __destructor"
-	Local $tObject = DllStructCreate($tagObject)
+	Local $tObject = DllStructCreate($__AOI_tagObject)
 
 	$QueryInterface = DllCallbackRegister($QueryInterface, "LONG", "ptr;ptr;ptr")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($QueryInterface), 1)
@@ -95,7 +95,7 @@ Func IDispatch($QueryInterface=QueryInterface, $AddRef=AddRef, $Release=Release,
 
 	Local $pData = MemCloneGlob($tObject)
 
-	Local $tObject = DllStructCreate($tagObject, $pData)
+	Local $tObject = DllStructCreate($__AOI_tagObject, $pData)
 
 	DllStructSetData($tObject, "Object", DllStructGetPtr($tObject, "Methods")) ; Interface method pointers
 	Return ObjCreateInterface(DllStructGetPtr($tObject, "Object"), $IID_IDispatch, Default, True) ; pointer that's wrapped into object
@@ -891,8 +891,7 @@ EndFunc
 # @return Integer offset
 #ce
 Func __AOI_GetPtrOffset($sElement)
-	Local Static $tObject = DllStructCreate("int RefCount;int Size;ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties;BYTE lock;PTR __destructor")
-	Local Static $iObject = Int(DllStructGetPtr($tObject, "Object"), @AutoItX64?2:1)
+	Local Static $tObject = DllStructCreate($__AOI_tagObject), $iObject = Int(DllStructGetPtr($tObject, "Object"), @AutoItX64?2:1)
 	Return DllStructGetPtr($tObject, $sElement) - $iObject
 EndFunc
 
