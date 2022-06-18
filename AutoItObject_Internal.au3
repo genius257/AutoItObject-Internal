@@ -305,43 +305,44 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
 
 	If $dispIdMember<-1 Then
-		If $dispIdMember=$__AOI_ConstantProperty_isExtensible Then;__isExtensible
-			Return __AOI_Invoke_isExtensible($pSelf, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_case Then;__case
-			Return __AOI_Invoke_case($pSelf, $pDispParams, $pVarResult, $wFlags)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_lookupSetter Then;__lookupSetter
-			Return __AOI_Invoke_lookupSetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_lookupGetter Then;__lookupGetter
-			Return __AOI_Invoke_lookupGetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_assign Then;__assign
-			Return __AOI_Invoke_assign($pSelf, $pDispParams)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_isSealed Then;__isSealed
-			Return __AOI_Invoke_isSealed($pSelf, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_isFrozen Then;__isFrozen
-			Return __AOI_Invoke_isFrozen($pSelf, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_get Then;__get
-			Return __AOI_Invoke_get($pSelf, $riid, $lcid, $pDispParams, $puArgErr, $pExcepInfo, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_set Then;__set
-			Return __AOI_Invoke_set($pSelf, $riid, $lcid, $pDispParams, $pVarResult, $pExcepInfo, $puArgErr)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_exists Then;__exists
-			Return __AOI_Invoke_exists($pSelf, $pDispParams, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_destructor Then;__destructor
-			Return __AOI_Invoke_destructor($pSelf, $pDispParams)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_freeze Then;__freeze
-			Return __AOI_Invoke_freeze($pSelf, $pDispParams)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_seal Then;__seal
-			Return __AOI_Invoke_seal($pSelf, $pDispParams)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_preventExtensions Then;__preventExtensions
-			Return __AOI_Invoke_preventExtensions($pSelf, $pDispParams)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_unset Then;__unset
-			Return __AOI_Invoke_unset($pSelf, $pDispParams, $pProperty)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_keys Then;__keys
-			Return __AOI_Invoke_keys($pSelf, $pVarResult)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_defineGetter Then;__defineGetter
-			Return __AOI_Invoke_defineGetter($pSelf, $pDispParams, $lcid)
-		ElseIf $dispIdMember=$__AOI_ConstantProperty_defineSetter Then;defineSetter
-			Return __AOI_Invoke_defineSetter($pSelf, $pDispParams, $lcid)
-		EndIf
+		Switch $dispIdMember
+			Case $__AOI_ConstantProperty_isExtensible
+				Return __AOI_Invoke_isExtensible($pSelf, $pVarResult)
+			Case $__AOI_ConstantProperty_case
+				Return __AOI_Invoke_case($pSelf, $pDispParams, $pVarResult, $wFlags)
+			Case $__AOI_ConstantProperty_lookupSetter
+				Return __AOI_Invoke_lookupSetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
+			Case $__AOI_ConstantProperty_lookupGetter
+				Return __AOI_Invoke_lookupGetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
+			Case $__AOI_ConstantProperty_assign
+				Return __AOI_Invoke_assign($pSelf, $pDispParams)
+			Case $__AOI_ConstantProperty_isSealed
+				Return __AOI_Invoke_isSealed($pSelf, $pVarResult)
+			Case $__AOI_ConstantProperty_isFrozen
+				Return __AOI_Invoke_isFrozen($pSelf, $pVarResult)
+			Case $__AOI_ConstantProperty_get
+				Return __AOI_Invoke_get($pSelf, $riid, $lcid, $pDispParams, $puArgErr, $pExcepInfo, $pVarResult)
+			Case $__AOI_ConstantProperty_set
+				Return __AOI_Invoke_set($pSelf, $riid, $lcid, $pDispParams, $pVarResult, $pExcepInfo, $puArgErr)
+			Case $__AOI_ConstantProperty_exists
+				Return __AOI_Invoke_exists($pSelf, $pDispParams, $pVarResult)
+			Case $__AOI_ConstantProperty_destructor
+				Return __AOI_Invoke_destructor($pSelf, $pDispParams)
+			Case $__AOI_ConstantProperty_freeze
+				Return __AOI_Invoke_freeze($pSelf, $pDispParams)
+			Case $__AOI_ConstantProperty_seal
+				Return __AOI_Invoke_seal($pSelf, $pDispParams)
+			Case $__AOI_ConstantProperty_preventExtensions
+				Return __AOI_Invoke_preventExtensions($pSelf, $pDispParams)
+			Case $__AOI_ConstantProperty_unset
+				Return __AOI_Invoke_unset($pSelf, $pDispParams, $pProperty)
+			Case $__AOI_ConstantProperty_keys
+				Return __AOI_Invoke_keys($pSelf, $pVarResult)
+			Case $__AOI_ConstantProperty_defineGetter
+				Return __AOI_Invoke_defineGetter($pSelf, $pDispParams, $lcid)
+			Case $__AOI_ConstantProperty_defineSetter
+				Return __AOI_Invoke_defineSetter($pSelf, $pDispParams, $lcid)
+		EndSwitch
 		Return $DISP_E_EXCEPTION
 	EndIf
 
