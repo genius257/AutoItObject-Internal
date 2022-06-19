@@ -879,7 +879,7 @@ Func __AOI_PropertyGetFromName($pProperty, $psName, $bCase = True)
 		If $pProperty=0 Then ExitLoop
 		$iIndex+=1
 		$tProperty = DllStructCreate($tagProperty, $pProperty)
-		If __AIO_StrCmp($tProperty.Name, $psName, $bCase) = 0 Then
+		If __AOI_StrCmp($tProperty.Name, $psName, $bCase) = 0 Then
 			$iID = $iIndex
 			ExitLoop
 		EndIf
@@ -941,7 +941,7 @@ Func __AOI_GetPtrValue($pPointer, $sElementType)
 	Return DllStructGetData(DllStructCreate($sElementType, $pPointer), 1)
 EndFunc
 
-Func __AIO_StrCmp($pString1, $pString2, $bCase = False, $bUnicode = True)
+Func __AOI_StrCmp($pString1, $pString2, $bCase = False, $bUnicode = True)
 	Local $aRet = DllCall('kernel32.dll', 'int', 'lstrcmp' & ($bCase ? '' : 'i') & ($bUnicode ? 'W' : ''), 'ptr', $pString1, 'ptr', $pString2)
 	If @error Then Return SetError(@error, @extended, Null)
 
