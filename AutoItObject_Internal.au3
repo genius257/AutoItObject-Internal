@@ -882,6 +882,7 @@ Func __AOI_PropertyGetFromName($pProperty, $psName, $bCase = True)
 			$iID = $iIndex
 			ExitLoop
 		EndIf
+		If $tProperty.next=0 Then ExitLoop
 		$pProperty = $tProperty.Next
 	WEnd
 	If $iID=-1 Then Return SetError(1, $iIndex, $pProperty)
