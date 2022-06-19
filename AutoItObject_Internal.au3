@@ -618,12 +618,13 @@ Func __AOI_Invoke_exists($pSelf, $pDispParams, $pVarResult)
 	If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
 	$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
 	If $tVARIANT.vt<>$VT_BSTR Then Return $DISP_E_BADVARTYPE
-	$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
-	$tVARIANT.vt = $VT_BOOL
 	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
 	Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
 	Local $pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("Properties"), "ptr"), $tVARIANT.data, $bCase)
-	$tVARIANT.data = @error<>0?0:1
+	Local $error = @error
+	$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
+	$tVARIANT.vt = $VT_BOOL
+	$tVARIANT.data = $error<>0?0:1
 	Return $S_OK
 EndFunc
 
