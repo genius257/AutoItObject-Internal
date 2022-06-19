@@ -355,10 +355,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 		Return $DISP_E_EXCEPTION
 	EndIf
 
-	For $i=1 To $dispIdMember-1
-		$pProperty = $tProperty.Next
-		$tProperty = DllStructCreate($tagProperty, $pProperty)
-	Next
+	$tProperty = __AOI_PropertyGetFromId($pProperty, $dispIdMember)
 
 	$tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
 
@@ -499,7 +496,7 @@ Func __AOI_Invoke_lookupSetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
 	If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) = $S_OK Then Return $DISP_E_EXCEPTION
 
 	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
-	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id - 1)
+	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
 	If Not $tProperty.__setter=0 Then
 		VariantClear($pVarResult)
 		VariantCopy($pVarResult, $tProperty.__setter)
@@ -519,7 +516,7 @@ Func __AOI_Invoke_lookupGetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
 	If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) = $S_OK Then Return $DISP_E_EXCEPTION
 
 	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
-	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id - 1)
+	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
 	If Not $tProperty.__getter=0 Then
 		VariantClear($pVarResult)
 		VariantCopy($pVarResult, $tProperty.__getter)
@@ -747,7 +744,7 @@ Func __AOI_Invoke_defineGetter($pSelf, $pDispParams, $lcid)
 	GetIDsOfNames($pSelf, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"))
 
 	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
-	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id - 1)
+	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
 
 	If ($tProperty.__getter=0) Then
 		Local $tVARIANT_Getter = DllStructCreate($tagVARIANT)
@@ -786,10 +783,7 @@ Func __AOI_Invoke_defineSetter($pSelf, $pDispParams, $lcid)
 	$tProperty = DllStructCreate($tagProperty, $pProperty)
 
 	$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
-	For $i=1 To $t.id - 1
-		$pProperty = $tProperty.Next
-		$tProperty = DllStructCreate($tagProperty, $pProperty)
-	Next
+	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
 	If ($tProperty.__setter=0) Then
 		Local $tVARIANT_Setter = DllStructCreate($tagVARIANT)
 		Local $pVARIANT_Setter = MemCloneGlob($tVARIANT_Setter)
@@ -904,7 +898,7 @@ EndFunc
 #ce
 Func __AOI_PropertyGetFromId($pProperty, $iID)
 	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
-	For $i=1 To $iID
+	For $i=1 To $iID - 1
 		$tProperty = DllStructCreate($tagProperty, $tProperty.Next)
 	Next
 	Return $tProperty
