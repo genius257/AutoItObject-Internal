@@ -61,6 +61,15 @@ Global Const $tagProperty = "ptr Name;ptr Variant;ptr __getter;ptr __setter;ptr 
 
 Global Enum Step -1 $__AOI_ConstantProperty_assign = -2, $__AOI_ConstantProperty_isExtensible, $__AOI_ConstantProperty_case, $__AOI_ConstantProperty_freeze, $__AOI_ConstantProperty_isFrozen, $__AOI_ConstantProperty_isSealed, $__AOI_ConstantProperty_keys, $__AOI_ConstantProperty_preventExtensions, $__AOI_ConstantProperty_defineGetter, $__AOI_ConstantProperty_defineSetter, $__AOI_ConstantProperty_lookupGetter, $__AOI_ConstantProperty_lookupSetter, $__AOI_ConstantProperty_seal, $__AOI_ConstantProperty_destructor = -16, $__AOI_ConstantProperty_unset, $__AOI_ConstantProperty_get, $__AOI_ConstantProperty_set, $__AOI_ConstantProperty_exists
 
+Global Const $__AOI_Object_Element_RefCount = __AOI_GetPtrOffset("RefCount")
+Global Const $__AOI_Object_Element_Size = __AOI_GetPtrOffset("Size")
+Global Const $__AOI_Object_Element_Object = __AOI_GetPtrOffset("Object")
+Global Const $__AOI_Object_Element_Methods = __AOI_GetPtrOffset("Methods")
+Global Const $__AOI_Object_Element_Callbacks = __AOI_GetPtrOffset("Callbacks")
+Global Const $__AOI_Object_Element_Properties = __AOI_GetPtrOffset("Properties")
+Global Const $__AOI_Object_Element_lock = __AOI_GetPtrOffset("lock")
+Global Const $__AOI_Object_Element___destructor = __AOI_GetPtrOffset("__destructor")
+
 Func IDispatch($QueryInterface=QueryInterface, $AddRef=AddRef, $Release=Release, $GetTypeInfoCount=GetTypeInfoCount, $GetTypeInfo=GetTypeInfo, $GetIDsOfNames=GetIDsOfNames, $Invoke=Invoke)
 	Local $tObject = DllStructCreate($__AOI_tagObject)
 
@@ -133,10 +142,10 @@ Func Release($pSelf)
 	Local $tStruct = DllStructCreate("int Ref", $pSelf-8)
 	$tStruct.Ref -= 1
 	If $tStruct.Ref = 0 Then; initiate garbage collection
-		Local $pDescructor = DllStructGetData(DllStructCreate("PTR", $pSelf + __AOI_GetPtrOffset("__destructor")),1)
+		Local $pDescructor = DllStructGetData(DllStructCreate("PTR", $pSelf + $__AOI_Object_Element___destructor),1)
 		If Not ($pDescructor=0) Then;TODO
 			Local $tVARIANT = DllStructCreate($tagVARIANT, $pDescructor)
-			DllStructSetData(DllStructCreate("PTR", $pSelf + __AOI_GetPtrOffset("__destructor")),1,0)
+			DllStructSetData(DllStructCreate("PTR", $pSelf + $__AOI_Object_Element___destructor),1,0)
 			Local $IDispatch = IDispatch()
 			$IDispatch.a=0
 			Local $pProperty = DllStructGetData(DllStructCreate("PTR", Ptr($IDispatch) + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1)
@@ -153,9 +162,9 @@ Func Release($pSelf)
 			VariantClear($pVARIANT)
 			$IDispatch=0
 		EndIf
-		DllStructSetData(DllStructCreate("BYTE", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2 + (@AutoItX64?8:4)),1,1);lock
-		Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1);get first property
-		DllStructSetData(DllStructCreate("ptr", $pSelf + (@AutoItX64?8:4) + (@AutoItX64?8:4)*7*2),1,0);detatch properties from object
+		DllStructSetData(DllStructCreate("BYTE", $pSelf + $__AOI_Object_Element_lock),1,1);lock
+		Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1);get first property
+		DllStructSetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1,0);detatch properties from object
 		While 1;releases all properties
 			If $pProperty=0 Then ExitLoop
 			Local $tProperty = DllStructCreate($tagProperty, $pProperty)
@@ -175,7 +184,7 @@ Func Release($pSelf)
 			$tProperty=0
 			_MemGlobalFree(GlobalHandle($_pProperty))
 		WEnd
-		Local $pMethods = $pSelf + (@AutoItX64?8:4)
+		Local $pMethods = $pSelf + $__AOI_Object_Element_Methods
 		_MemGlobalFree(GlobalHandle($pSelf-8))
 		Return 0
 	EndIf
@@ -201,16 +210,16 @@ Func GetIDsOfNames($pSelf, $riid, $rgszNames, $cNames, $lcid, $rgDispId)
 		If DllStructGetData($tIds, 1) <> -1 Then Return $S_OK
 	EndIf
 
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
-	Local $pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("Properties"), "ptr"), $pStr, $bCase)
+	Local $pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + $__AOI_Object_Element_Properties, "ptr"), $pStr, $bCase)
 	Local $iID = @error<>0?-1:@extended
 	Local $iIndex = @extended
 
 	If ($iID=-1) And BitAND($iLock, $__AOI_LOCK_CREATE)=0 Then
 		Local $pData = __AOI_PropertyCreate($s_rgszName)
 		If $iIndex = -1 Then;first item in list
-			DllStructSetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")), 1, $pData)
+			DllStructSetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties), 1, $pData)
 		Else
 			$tProperty = DllStructCreate($tagProperty, $pProperty)
 			$tProperty.next = $pData
@@ -290,10 +299,10 @@ EndFunc
 #ce
 Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarResult, $pExcepInfo, $puArgErr)
 	If $dispIdMember = 0 Then
-		Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+		Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 		Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
 		Local Static $tEmptyString = DllStructCreate("WCHAR")
-		__AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("Properties"), "ptr"), DllStructGetPtr($tEmptyString), $bCase)
+		__AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + $__AOI_Object_Element_Properties, "ptr"), DllStructGetPtr($tEmptyString), $bCase)
 		$dispIdMember = @error<>0?-1:(@extended + 1)
 	EndIf
 	If $dispIdMember=-1 Then Return $DISP_E_MEMBERNOTFOUND
@@ -301,7 +310,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	Local $t
 	Local $i
 
-	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
+	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
 	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
 
 	If $dispIdMember<-1 Then
@@ -362,7 +371,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$oIDispatch.ret = 0
 			DllStructSetData(DllStructCreate("INT", $pSelf-4-4), 1, DllStructGetData(DllStructCreate("INT", $pSelf-4-4), 1)+1)
 			$oIDispatch.parent = 0
-			Local $tProperty02 = DllStructCreate($tagProperty, DllStructGetData(DllStructCreate("ptr", ptr($oIDispatch) + __AOI_GetPtrOffset("Properties")),1))
+			Local $tProperty02 = DllStructCreate($tagProperty, DllStructGetData(DllStructCreate("ptr", ptr($oIDispatch) + $__AOI_Object_Element_Properties),1))
 			$tProperty02=DllStructCreate($tagProperty, $tProperty02.Next)
 			$tProperty02=DllStructCreate($tagProperty, $tProperty02.Next)
 			$tVARIANT = DllStructCreate($tagVARIANT, $tProperty02.Variant)
@@ -371,7 +380,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$oIDispatch.arguments = IDispatch();
 			$oIDispatch.arguments.length=$tDISPPARAMS.cArgs
 			Local $aArguments[$tDISPPARAMS.cArgs], $iArguments=$tDISPPARAMS.cArgs-1
-			Local $_pProperty = DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + __AOI_GetPtrOffset("Properties")),1)
+			Local $_pProperty = DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + $__AOI_Object_Element_Properties),1)
 			Local $_tProperty = DllStructCreate($tagProperty, $_pProperty)
 			For $i=0 To $iArguments
 				VariantClear($_tProperty.Variant)
@@ -408,13 +417,13 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			$oIDispatch.ret = 0
 			DllStructSetData(DllStructCreate("INT", $pSelf-4-4), 1, DllStructGetData(DllStructCreate("INT", $pSelf-4-4), 1)+1)
 			$oIDispatch.parent = 0
-			Local $tProperty02 = DllStructCreate($tagProperty, DllStructGetData(DllStructCreate("ptr", ptr($oIDispatch) + __AOI_GetPtrOffset("Properties")),1))
+			Local $tProperty02 = DllStructCreate($tagProperty, DllStructGetData(DllStructCreate("ptr", ptr($oIDispatch) + $__AOI_Object_Element_Properties),1))
 			$tProperty02=DllStructCreate($tagProperty, $tProperty02.Next)
 			$tProperty02=DllStructCreate($tagProperty, $tProperty02.Next)
 			$tVARIANT = DllStructCreate($tagVARIANT, $tProperty02.Variant)
 			$tVARIANT.vt = $VT_DISPATCH
 			$tVARIANT.data = $pSelf
-			Local $_pProperty = DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + __AOI_GetPtrOffset("Properties")),1)
+			Local $_pProperty = DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + $__AOI_Object_Element_Properties),1)
 			Local $_tProperty = DllStructCreate($tagProperty, $_pProperty)
 			Local $_tProperty2 = DllStructCreate($tagProperty, $_tProperty.Next)
 			VariantClear($_tProperty.Variant)
@@ -436,7 +445,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 			Return ($iError<>0)?$DISP_E_EXCEPTION:$S_OK
 		EndIf
 
-		Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+		Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 		If BitAND($iLock, $__AOI_LOCK_UPDATE)>0 Then Return $DISP_E_EXCEPTION
 
 		$_tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
@@ -447,7 +456,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 EndFunc
 
 Func __AOI_Invoke_isExtensible($pSelf, $pVarResult)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	Local $iExtensible = $__AOI_LOCK_CREATE
 	$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 	$tVARIANT.vt = $VT_BOOL
@@ -461,15 +470,15 @@ Func __AOI_Invoke_case($pSelf, $pDispParams, $pVarResult, $wFlags)
 		If $tDISPPARAMS.cArgs<>0 Then Return $DISP_E_BADPARAMCOUNT
 		$tVARIANT=DllStructCreate($tagVARIANT, $pVarResult)
 		$tVARIANT.vt = $VT_BOOL
-		Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+		Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 		$tVARIANT.data = (BitAND($iLock, $__AOI_LOCK_CASE)>0)?0:1
 	Else; $DISPATCH_PROPERTYPUT
 		If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
 		$tVARIANT=DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
 		If $tVARIANT.vt<>$VT_BOOL Then Return $DISP_E_BADVARTYPE
-		Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+		Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 		If BitAND($iLock, $__AOI_LOCK_UPDATE)>0 Then Return $DISP_E_EXCEPTION
-		Local $tLock = DllStructCreate("BYTE", $pSelf + __AOI_GetPtrOffset("lock"))
+		Local $tLock = DllStructCreate("BYTE", $pSelf + $__AOI_Object_Element_lock)
 		$b = DllStructGetData(DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs), "data")
 		DllStructSetData($tLock, 1, _
 			(Not $b) ? BitOR(DllStructGetData($tLock, 1), $__AOI_LOCK_CASE) : BitAND(DllStructGetData($tLock, 1), BitNOT(BitShift(1 , 0-(Log($__AOI_LOCK_CASE)/log(2))))) _
@@ -489,7 +498,7 @@ Func __AOI_Invoke_lookupSetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
 	$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
 	If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) = $S_OK Then Return $DISP_E_EXCEPTION
 
-	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
+	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
 	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id - 1)
 	If Not $tProperty.__setter=0 Then
 		VariantClear($pVarResult)
@@ -509,7 +518,7 @@ Func __AOI_Invoke_lookupGetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
 	$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
 	If Not GetIDsOfNames($pSelf, $riid, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id")) = $S_OK Then Return $DISP_E_EXCEPTION
 
-	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
+	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
 	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id - 1)
 	If Not $tProperty.__getter=0 Then
 		VariantClear($pVarResult)
@@ -519,7 +528,7 @@ Func __AOI_Invoke_lookupGetter($pSelf, $riid, $lcid, $pDispParams, $pVarResult)
 EndFunc
 
 Func __AOI_Invoke_assign($pSelf, $pDispParams)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	If BitAND($iLock, $__AOI_LOCK_CREATE)>0 Then Return $DISP_E_EXCEPTION
 
 
@@ -534,12 +543,12 @@ Func __AOI_Invoke_assign($pSelf, $pDispParams)
 	For $i=$tDISPPARAMS.cArgs-1 To 0 Step -1
 		$tVARIANT=DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+$iVARIANT*$i)
 		If Not (DllStructGetData($tVARIANT, "vt")=$VT_DISPATCH) Then Return $DISP_E_BADVARTYPE
-		$pExternalProperty = __AOI_GetPtrValue(DllStructGetData($tVARIANT, "data") + __AOI_GetPtrOffset("Properties"), "ptr")
+		$pExternalProperty = __AOI_GetPtrValue(DllStructGetData($tVARIANT, "data") + $__AOI_Object_Element_Properties, "ptr")
 		While 1
 			If $pExternalProperty = 0 Then ExitLoop
 			$tExternalProperty = DllStructCreate($tagProperty, $pExternalProperty)
 
-			$pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("Properties"), "ptr"), $tExternalProperty.Name, False)
+			$pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + $__AOI_Object_Element_Properties, "ptr"), $tExternalProperty.Name, False)
 			$iID = @error<>0?-1:@extended
 			$iIndex = @extended
 
@@ -550,7 +559,7 @@ Func __AOI_Invoke_assign($pSelf, $pDispParams)
 				VariantCopy($tProperty.Variant, $tExternalProperty.Variant)
 
 				If $iIndex=-1 Then;first item in list
-					DllStructSetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")), 1, $pData)
+					DllStructSetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties), 1, $pData)
 				Else
 					$tProperty = DllStructCreate($tagProperty, $pProperty)
 					$tProperty.Next = $pData
@@ -568,7 +577,7 @@ Func __AOI_Invoke_assign($pSelf, $pDispParams)
 EndFunc
 
 Func __AOI_Invoke_isSealed($pSelf, $pVarResult)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	Local $iSeal = $__AOI_LOCK_CREATE + $__AOI_LOCK_DELETE
 	$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 	$tVARIANT.vt = $VT_BOOL
@@ -577,7 +586,7 @@ Func __AOI_Invoke_isSealed($pSelf, $pVarResult)
 EndFunc
 
 Func __AOI_Invoke_isFrozen($pSelf, $pVarResult)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	Local $iFreeze = $__AOI_LOCK_CREATE + $__AOI_LOCK_UPDATE + $__AOI_LOCK_DELETE
 	$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 	$tVARIANT.vt = $VT_BOOL
@@ -618,9 +627,9 @@ Func __AOI_Invoke_exists($pSelf, $pDispParams, $pVarResult)
 	If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
 	$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
 	If $tVARIANT.vt<>$VT_BSTR Then Return $DISP_E_BADVARTYPE
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
-	Local $pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("Properties"), "ptr"), $tVARIANT.data, $bCase)
+	Local $pProperty = __AOI_PropertyGetFromName(__AOI_GetPtrValue($pSelf + $__AOI_Object_Element_Properties, "ptr"), $tVARIANT.data, $bCase)
 	Local $error = @error
 	$tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 	$tVARIANT.vt = $VT_BOOL
@@ -629,7 +638,7 @@ Func __AOI_Invoke_exists($pSelf, $pDispParams, $pVarResult)
 EndFunc
 
 Func __AOI_Invoke_destructor($pSelf, $pDispParams)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	If BitAND($iLock, $__AOI_LOCK_CREATE)>0 Then Return $DISP_E_EXCEPTION
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 	If $tDISPPARAMS.cArgs<>1 Then Return $DISP_E_BADPARAMCOUNT
@@ -639,14 +648,14 @@ Func __AOI_Invoke_destructor($pSelf, $pDispParams)
 	$tVARIANT = DllStructCreate($tagVARIANT, $pVARIANT)
 	VariantInit($pVARIANT)
 	VariantCopy($pVARIANT, $tDISPPARAMS.rgvargs)
-	DllStructSetData(DllStructCreate("PTR", $pSelf + __AOI_GetPtrOffset("__destructor")),1,$pVARIANT)
+	DllStructSetData(DllStructCreate("PTR", $pSelf + $__AOI_Object_Element___destructor),1,$pVARIANT)
 	Return $S_OK
 EndFunc
 
 Func __AOI_Invoke_freeze($pSelf, $pDispParams)
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 	If $tDISPPARAMS.cArgs<>0 Then Return $DISP_E_BADPARAMCOUNT
-	Local $tLock = DllStructCreate("BYTE", $pSelf + __AOI_GetPtrOffset("lock"))
+	Local $tLock = DllStructCreate("BYTE", $pSelf + $__AOI_Object_Element_lock)
 	DllStructSetData($tLock, 1, BitOR(DllStructGetData($tLock, 1), $__AOI_LOCK_CREATE + $__AOI_LOCK_DELETE + $__AOI_LOCK_UPDATE))
 	Return $S_OK
 EndFunc
@@ -654,7 +663,7 @@ EndFunc
 Func __AOI_Invoke_seal($pSelf, $pDispParams)
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 	If $tDISPPARAMS.cArgs<>0 Then Return $DISP_E_BADPARAMCOUNT
-	Local $tLock = DllStructCreate("BYTE", $pSelf + __AOI_GetPtrOffset("lock"))
+	Local $tLock = DllStructCreate("BYTE", $pSelf + $__AOI_Object_Element_lock)
 	DllStructSetData($tLock, 1, BitOR(DllStructGetData($tLock, 1), $__AOI_LOCK_CREATE + $__AOI_LOCK_DELETE))
 	Return $S_OK
 EndFunc
@@ -662,13 +671,13 @@ EndFunc
 Func __AOI_Invoke_preventExtensions($pSelf, $pDispParams)
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 	If $tDISPPARAMS.cArgs<>0 Then Return $DISP_E_BADPARAMCOUNT
-	Local $tLock = DllStructCreate("BYTE", $pSelf + __AOI_GetPtrOffset("lock"))
+	Local $tLock = DllStructCreate("BYTE", $pSelf + $__AOI_Object_Element_lock)
 	DllStructSetData($tLock, 1, BitOR(DllStructGetData($tLock, 1), $__AOI_LOCK_CREATE))
 	Return $S_OK
 EndFunc
 
 Func __AOI_Invoke_unset($pSelf, $pDispParams, $pProperty)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	If BitAND($iLock, $__AOI_LOCK_DELETE)>0 Then Return $DISP_E_EXCEPTION
 
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
@@ -684,7 +693,7 @@ Func __AOI_Invoke_unset($pSelf, $pDispParams, $pProperty)
 		Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
 		If ($bCase And _WinAPI_GetString($tProperty.Name)==$sProperty) Or ((Not $bCase) And _WinAPI_GetString($tProperty.Name)=$sProperty) Then
 			If $tProperty_Prev=0 Then
-				DllStructSetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")), 1, $tProperty.Next)
+				DllStructSetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties), 1, $tProperty.Next)
 			Else
 				$tProperty_Prev.Next = $tProperty.next
 			EndIf
@@ -701,7 +710,7 @@ EndFunc
 
 Func __AOI_Invoke_keys($pSelf, $pVarResult)
 	Local $aKeys[0]
-	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
+	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
 	While 1
 		If $pProperty=0 Then ExitLoop
 		Local $tProperty = DllStructCreate($tagProperty, $pProperty)
@@ -713,13 +722,13 @@ Func __AOI_Invoke_keys($pSelf, $pVarResult)
 	Local $oIDispatch = IDispatch()
 	$oIDispatch.a=$aKeys
 	VariantClear($pVarResult)
-	VariantCopy($pVarResult, DllStructGetData(DllStructCreate($tagProperty, DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + __AOI_GetPtrOffset("Properties")),1)), "Variant"))
+	VariantCopy($pVarResult, DllStructGetData(DllStructCreate($tagProperty, DllStructGetData(DllStructCreate("ptr", Ptr($oIDispatch) + $__AOI_Object_Element_Properties),1)), "Variant"))
 	$oIDispatch=0
 	Return $S_OK
 EndFunc
 
 Func __AOI_Invoke_defineGetter($pSelf, $pDispParams, $lcid)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	If BitAND($iLock, $__AOI_LOCK_CREATE)>0 Then Return $DISP_E_EXCEPTION
 
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
@@ -737,7 +746,7 @@ Func __AOI_Invoke_defineGetter($pSelf, $pDispParams, $lcid)
 	$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
 	GetIDsOfNames($pSelf, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"))
 
-	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
+	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
 	$tProperty = __AOI_PropertyGetFromId($pProperty, $t.id - 1)
 
 	If ($tProperty.__getter=0) Then
@@ -755,7 +764,7 @@ Func __AOI_Invoke_defineGetter($pSelf, $pDispParams, $lcid)
 EndFunc
 
 Func __AOI_Invoke_defineSetter($pSelf, $pDispParams, $lcid)
-	Local $iLock = __AOI_GetPtrValue($pSelf + __AOI_GetPtrOffset("lock"), "BYTE")
+	Local $iLock = __AOI_GetPtrValue($pSelf + $__AOI_Object_Element_lock, "BYTE")
 	If BitAND($iLock, $__AOI_LOCK_CREATE)>0 Then Return $DISP_E_EXCEPTION
 
 	$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
@@ -773,7 +782,7 @@ Func __AOI_Invoke_defineSetter($pSelf, $pDispParams, $lcid)
 	$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
 	GetIDsOfNames($pSelf, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"))
 
-	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + __AOI_GetPtrOffset("Properties")),1)
+	$pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
 	$tProperty = DllStructCreate($tagProperty, $pProperty)
 
 	$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
