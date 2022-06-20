@@ -311,7 +311,6 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	Local $i
 
 	Local $pProperty = DllStructGetData(DllStructCreate("ptr", $pSelf + $__AOI_Object_Element_Properties),1)
-	Local $tProperty = DllStructCreate($tagProperty, $pProperty)
 
 	If $dispIdMember<-1 Then
 		Switch $dispIdMember
