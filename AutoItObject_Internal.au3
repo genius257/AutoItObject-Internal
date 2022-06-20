@@ -359,8 +359,8 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 	$tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
 
 	If (Not(BitAND($wFlags, $DISPATCH_PROPERTYGET)=0)) Then
-		$_tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 		If Not($tProperty.__getter = 0) Then
+			$_tVARIANT = DllStructCreate($tagVARIANT, $pVarResult)
 			$tDISPPARAMS = DllStructCreate($tagDISPPARAMS, $pDispParams)
 			Local $oIDispatch = IDispatch()
 			$oIDispatch.val = 0
