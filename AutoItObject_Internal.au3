@@ -354,7 +354,7 @@ Func Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $pVarRes
 		Return $DISP_E_EXCEPTION
 	EndIf
 
-	$tProperty = __AOI_PropertyGetFromId($pProperty, $dispIdMember)
+	Local $tProperty = __AOI_PropertyGetFromId($pProperty, $dispIdMember)
 
 	$tVARIANT = DllStructCreate($tagVARIANT, $tProperty.Variant)
 
