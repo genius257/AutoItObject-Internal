@@ -774,7 +774,6 @@ Func __AOI_Invoke_defineSetter($tObject, $pDispParams, $lcid)
 	$t.str_ptr_ptr = DllStructGetPtr($t, "str_ptr")
 	GetIDsOfNames($tObject.Object, 0, $t.str_ptr_ptr, 1, $lcid, DllStructGetPtr($t, "id"))
 
-	$tProperty = DllStructCreate($tagProperty, $pProperty)
 	$pProperty = $tObject.Properties
 
 	$tVARIANT = DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs)
