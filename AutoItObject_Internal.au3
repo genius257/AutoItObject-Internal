@@ -839,24 +839,6 @@ Func __AOI_PropertyGetFromId($pProperty, $iID)
 EndFunc
 
 #cs
-# Create new empty named property
-# @internal
-# @param String $sName new property name
-# @return Pointer new empty property
-#ce
-Func __AOI_PropertyCreate($sName)
-	Local $tProp = DllStructCreate($tagProperty)
-		$tProp.Name = _WinAPI_CreateString($sName)
-			$tVARIANT = DllStructCreate($tagVARIANT)
-			$pVARIANT = MemCloneGlob($tVARIANT)
-			$tVARIANT = DllStructCreate($tagVARIANT, $pVARIANT)
-			$tVARIANT.vt = $VT_EMPTY
-			VariantInit($tVARIANT)
-		$tProp.Variant = $pVARIANT
-	Return MemCloneGlob($tProp)
-EndFunc
-
-#cs
 # Get IDispatch property pointer offset from Object property in bytes
 # @internal
 # @param String $sElement struct element name
@@ -876,12 +858,6 @@ EndFunc
 #ce
 Func __AOI_GetPtrValue($pPointer, $sElementType)
 	Return DllStructGetData(DllStructCreate($sElementType, $pPointer), 1)
-EndFunc
-
-Func __AOI_StrCmp($pString1, $pString2, $bCase = False)
-	Local $aRet = DllCall('kernel32.dll', 'int', 'lstrcmp' & ($bCase ? '' : 'i') & 'W', 'ptr', $pString1, 'ptr', $pString2)
-	If @error Then Return SetError(@error, @extended, Null)
-	Return $aRet[0]
 EndFunc
 
 Func __AOI_Properties_Add($tObject, $pName, $pVariant = 0)
@@ -929,10 +905,4 @@ Func __AOI_Properties_Remove($tObject, $iIndex);WARNING: do not remove index zer
 	_WinAPI_FreeMemory($tProperty.Name)
 	_MemMoveMemory($tObject.Properties + ($cProperty * ($iIndex + 1)), $tObject.Properties + ($cProperty * $iIndex), $cProperty * ($tObject.cProperties - ($iIndex + 1)))
 	$tObject.iProperties -= 1
-EndFunc
-
-Func SysStringLen( $pBSTR )
-  Local $aRet = DllCall( "OleAut32.dll", "uint", "SysStringLen", "ptr", $pBSTR )
-  If @error Then Return SetError(2, 0, 0)
-  Return $aRet[0]
 EndFunc
