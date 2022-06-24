@@ -642,26 +642,6 @@ Func __AOI_Invoke_unset($tObject, $pDispParams, $pProperty)
 	If @error <> 0 Then Return $DISP_E_MEMBERNOTFOUND
 	__AOI_Properties_Remove($tObject, @extended)
 	Return $S_OK
-	While 1
-		If $pProperty=0 Then ExitLoop
-		$tProperty_Prev = $tProperty
-		$tProperty = DllStructCreate($tagProperty, $pProperty)
-		Local $bCase = Not (BitAND($iLock, $__AOI_LOCK_CASE)>0)
-		If ($bCase And _WinAPI_GetString($tProperty.Name)==$sProperty) Or ((Not $bCase) And _WinAPI_GetString($tProperty.Name)=$sProperty) Then
-			If $tProperty_Prev=0 Then
-				$tObject.Properties = $tProperty.Next
-			Else
-				$tProperty_Prev.Next = $tProperty.next
-			EndIf
-			VariantClear($tProperty.Variant)
-			_MemGlobalFree(GlobalHandle($tProperty.Variant))
-			$tProperty = 0
-			_MemGlobalFree(GlobalHandle($pProperty))
-			Return $S_OK
-		EndIf
-		$pProperty = $tProperty.Next
-	WEnd
-	Return $DISP_E_MEMBERNOTFOUND
 EndFunc
 
 Func __AOI_Invoke_keys($tObject, $pVarResult)
