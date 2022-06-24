@@ -494,7 +494,7 @@ Func __AOI_Invoke_lookupGetter($tObject, $riid, $lcid, $pDispParams, $pVarResult
 	Return $S_OK
 EndFunc
 
-Func __AOI_Invoke_assign($tObject, $pDispParams);FIXME: implement correctly
+Func __AOI_Invoke_assign($tObject, $pDispParams)
 	Local $iLock = $tObject.lock
 	If BitAND($iLock, $__AOI_LOCK_CREATE)>0 Then Return $DISP_E_EXCEPTION
 
