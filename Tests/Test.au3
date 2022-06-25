@@ -21,6 +21,7 @@ testFreeze()
 testPreventExtensions()
 testAssign()
 testMethods();tests the remaining non tested methods
+testUnset()
 
 Func testTypeSupport()
 	Local $oIDispatch = IDispatch()
@@ -238,5 +239,17 @@ Func testMethods()
 	$value = $oIDispatch.__exists("a")
 	assertEquals($value, True)
 	$value = $oIDispatch.__exists("A")
+	assertEquals($value, False)
+EndFunc
+
+Func testUnset()
+	Local $oIDispatch = IDispatch()
+	$oIDispatch.a = 1
+	$oIDispatch.b = 2
+	$oIDispatch.c = 3
+	$value = $oIDispatch.__exists("b")
+	assertEquals($value, True)
+	$oIDispatch.__unset('b')
+	$value = $oIDispatch.__exists("b")
 	assertEquals($value, False)
 EndFunc
