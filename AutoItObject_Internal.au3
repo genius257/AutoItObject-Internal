@@ -748,34 +748,6 @@ Func GlobalHandle($pMem)
    Return $aRet[0]
 EndFunc
 
-Func LocalSize($hMem)
-	Local $aRet = DllCall("Kernel32.dll", "UINT", "LocalSize", "handle", $hMem)
-	If @error<>0 Then Return SetError(@error, @extended, 0)
-	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
-	Return $aRet[0]
-EndFunc
-
-Func LocalHandle($pMem)
-	Local $aRet = DllCall("Kernel32.dll", "handle", "LocalHandle", "ptr", $pMem)
-	If @error<>0 Then Return SetError(@error, @extended, 0)
-	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
-	Return $aRet[0]
-EndFunc
-
-Func HeapSize($hHeap, $dwFlags, $lpMem)
-	Local $aRet = DllCall("Kernel32.dll", "ULONG_PTR", "HeapSize", "handle", $hHeap, "dword", $dwFlags, "LONG_PTR", $lpMem)
-	If @error<>0 Then Return SetError(@error, @extended, 0)
-	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
-	Return $aRet[0]
-EndFunc
-
-Func GetProcessHeap()
-	Local $aRet = DllCall("Kernel32.dll", "handle", "GetProcessHeap")
-	If @error<>0 Then Return SetError(@error, @extended, 0)
-	If $aRet[0]=0 Then Return SetError(-1, @extended, 0)
-	Return $aRet[0]
-EndFunc
-
 Func VariantInit($tVARIANT)
 	Local $aRet=DllCall("OleAut32.dll","LONG","VariantInit",IsDllStruct($tVARIANT)?"struct*":"PTR",$tVARIANT)
 	If @error<>0 Then Return SetError(-1, @error, 0)
@@ -795,14 +767,6 @@ Func VariantClear($tVARIANT)
 	If @error<>0 Then Return SetError(-1, @error, 0)
 	If $aRet[0]<>$S_OK Then SetError($aRet, 0, $tVARIANT)
 	Return 1
-EndFunc
-
-Func VariantChangeType()
-	;TODO
-EndFunc
-
-Func VariantChangeTypeEx()
-	;TODO
 EndFunc
 
 Func PrivateProperty()
@@ -846,17 +810,6 @@ EndFunc
 Func __AOI_GetPtrOffset($sElement)
 	Local Static $tObject = DllStructCreate($__AOI_tagObject), $iObject = Int(DllStructGetPtr($tObject, "Object"), @AutoItX64?2:1)
 	Return DllStructGetPtr($tObject, $sElement) - $iObject
-EndFunc
-
-#cs
-# Gets single value from pointer
-# @internal
-# @param Pointer $pPointer the struct element pointer
-# @param String $sElementType struct element specification
-# @return Mixed the value of the pointer of type specified by $sElementType
-#ce
-Func __AOI_GetPtrValue($pPointer, $sElementType)
-	Return DllStructGetData(DllStructCreate($sElementType, $pPointer), 1)
 EndFunc
 
 Func __AOI_Properties_Add($tObject, $pName, $pVariant = 0)
