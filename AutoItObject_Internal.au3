@@ -363,8 +363,7 @@ Func __AOI_Invoke($pSelf, $dispIdMember, $riid, $lcid, $wFlags, $pDispParams, $p
 			Local $aArguments[$tDISPPARAMS.cArgs], $iArguments=$tDISPPARAMS.cArgs-1
 			Local $_tProperty = __AOI_PropertyGetFromId($_tObject.Properties, 1)
 			For $i=0 To $iArguments
-				__AOI_VariantClear($_tProperty.Variant)
-				__AOI_VariantCopy($_tProperty.Variant, $tDISPPARAMS.rgvargs+(($iArguments-$i)*DllStructGetSize($_tVARIANT)))
+				__AOI_VariantReplace($_tProperty.Variant, $tDISPPARAMS.rgvargs+(($iArguments-$i)*DllStructGetSize($_tVARIANT)))
 				$aArguments[$i]=$oIDispatch.val
 			Next
 			$oIDispatch.arguments.values=$aArguments
@@ -467,8 +466,7 @@ Func __AOI_Invoke_lookupSetter($tObject, $riid, $lcid, $pDispParams, $pVarResult
 	Local $pProperty = $tObject.Properties
 	Local $tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
 	If Not $tProperty.__setter=0 Then
-		__AOI_VariantClear($pVarResult)
-		__AOI_VariantCopy($pVarResult, $tProperty.__setter)
+		__AOI_VariantReplace($pVarResult, $tProperty.__setter)
 	EndIf
 	Return $__AOI_S_OK
 EndFunc
@@ -487,8 +485,7 @@ Func __AOI_Invoke_lookupGetter($tObject, $riid, $lcid, $pDispParams, $pVarResult
 	Local $pProperty = $tObject.Properties
 	Local $tProperty = __AOI_PropertyGetFromId($pProperty, $t.id)
 	If Not $tProperty.__getter=0 Then
-		__AOI_VariantClear($pVarResult)
-		__AOI_VariantCopy($pVarResult, $tProperty.__getter)
+		__AOI_VariantReplace($pVarResult, $tProperty.__getter)
 	EndIf
 	Return $__AOI_S_OK
 EndFunc
