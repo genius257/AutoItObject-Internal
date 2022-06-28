@@ -512,7 +512,6 @@ Func __AOI_Invoke_assign($tObject, $pDispParams)
 		$tVARIANT=DllStructCreate($tagVARIANT, $tDISPPARAMS.rgvargs+$iVARIANT*$i)
 		If Not (DllStructGetData($tVARIANT, "vt")=$VT_DISPATCH) Then Return $DISP_E_BADVARTYPE
 		$_tObject = DllStructCreate($__AOI_tagObject, $tVARIANT.data + $__AOI_Object_Element_RefCount)
-		;$pExternalProperty = __AOI_GetPtrValue(DllStructGetData($tVARIANT, "data") + $__AOI_Object_Element_Properties, "ptr")
 		For $j = 1 To $_tObject.iProperties
 			$_tProperty = __AOI_PropertyGetFromId($_tObject.Properties, $j)
 			$pProperty = __AOI_PropertyGetFromName($tObject, $_tProperty.Name, False);TODO: the case sensetive option should reflect the main object case sensetive setting.
