@@ -171,7 +171,6 @@ Func __AOI_Release($pSelf)
 			$tObject.Properties = 0;detatch properties from object
 			Local $tProperty
 			For $i=0 To $tObject.iProperties;releases all properties
-				;$tProperty = DllStructCreate($tagProperty, $pProperty)
 				$tProperty = __AOI_PropertyGetFromId($pProperty, $i)
 				If Not ($tProperty.__getter=0) Then
 					__AOI_VariantClear($tProperty.__getter)
