@@ -514,7 +514,7 @@ Func __AOI_Invoke_assign($tObject, $pDispParams)
 		$_tObject = DllStructCreate($__AOI_tagObject, $tVARIANT.data + $__AOI_Object_Element_RefCount)
 		For $j = 1 To $_tObject.iProperties
 			$_tProperty = __AOI_PropertyGetFromId($_tObject.Properties, $j)
-			$pProperty = __AOI_PropertyGetFromName($tObject, $_tProperty.Name, False);TODO: the case sensetive option should reflect the main object case sensetive setting.
+			$pProperty = __AOI_PropertyGetFromName($tObject, $_tProperty.Name, False);TODO: the case sensitive option should reflect the main object case sensitive setting.
 
 			$iID = @error<>0?-1:@extended
 
