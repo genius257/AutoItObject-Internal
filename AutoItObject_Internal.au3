@@ -57,7 +57,7 @@ Global Enum $__AOI_VT_EMPTY,$__AOI_VT_NULL,$__AOI_VT_I2,$__AOI_VT_I4,$__AOI_VT_R
 	$__AOI_VT_TYPEMASK=0xfff
 
 Global Const $__AOI_tagObject = "int RefCount;int Size;ptr Object;ptr Methods[7];int_ptr Callbacks[7];ptr Properties;long iProperties;long cProperties;BYTE lock;PTR __destructor"
-Global Const $__AOI_tagProperty = "ptr Name;ptr Variant;ptr __getter;ptr __setter"
+Global Const $__AOI_tagProperty = "ptr Name;int cName;ptr Variant;ptr __getter;ptr __setter"
 Global Const $__AOI_cProperty = DllStructGetSize(DllStructCreate($__AOI_tagProperty))
 
 Global Enum Step -1 $__AOI_ConstantProperty_assign = -2, $__AOI_ConstantProperty_isExtensible, $__AOI_ConstantProperty_case, $__AOI_ConstantProperty_freeze, $__AOI_ConstantProperty_isFrozen, $__AOI_ConstantProperty_isSealed, $__AOI_ConstantProperty_keys, $__AOI_ConstantProperty_preventExtensions, $__AOI_ConstantProperty_defineGetter, $__AOI_ConstantProperty_defineSetter, $__AOI_ConstantProperty_lookupGetter, $__AOI_ConstantProperty_lookupSetter, $__AOI_ConstantProperty_seal, $__AOI_ConstantProperty_destructor = -16, $__AOI_ConstantProperty_unset, $__AOI_ConstantProperty_get, $__AOI_ConstantProperty_set, $__AOI_ConstantProperty_exists
@@ -778,10 +778,10 @@ Func __AOI_PropertyGetFromName($tObject, $psName, $bCase = True)
 	If $pProperties = 0 Then Return SetExtended(-1, 0)
 	For $i=1 To $tObject.iProperties;FIXME: check if including zero gives any problems
 		$tProperty = DllStructCreate($__AOI_tagProperty, $pProperties + ($__AOI_cProperty * $i))
-		If $bCase And DllStructGetData(DllStructCreate("WCHAR[255]", $tProperty.Name), 1) == DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1) Then
+		If $bCase And DllStructGetData(DllStructCreate("WCHAR["&$tProperty.cName&"]", $tProperty.Name), 1) == DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1) Then
 			$iID = $i
 			ExitLoop
-		ElseIf Not $bCase And DllStructGetData(DllStructCreate("WCHAR[255]", $tProperty.Name), 1) = DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1) Then
+		ElseIf Not $bCase And DllStructGetData(DllStructCreate("WCHAR["&$tProperty.cName&"]", $tProperty.Name), 1) = DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1) Then
 			$iID = $i
 			ExitLoop
 		EndIf
@@ -815,6 +815,7 @@ Func __AOI_Properties_Add($tObject, $pName, $pVariant = 0)
 	Local $tProperty = DllStructCreate($__AOI_tagProperty, $tObject.Properties + ($__AOI_cProperty * ($tObject.iProperties)))
 	;$tProperty.Name = SysAllocString($pName)
 	$tProperty.Name = _WinAPI_CreateString(_WinAPI_GetString($pName))
+	$tProperty.cName = _WinAPI_StrLen($pName, True)
 	Local $tVARIANT = DllStructCreate($__AOI_tagVARIANT, __AOI_MemCloneGlob(DllStructCreate($__AOI_tagVARIANT)))
 	__AOI_VariantInit($tVARIANT)
 	If Not ($pVARIANT = 0) Then
