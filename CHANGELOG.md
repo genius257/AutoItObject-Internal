@@ -5,6 +5,82 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- new global varaible `$__AOI_tagObject`
+- new global enums `$__AOI_ConstantProperty_*`
+- new test for `__unset` method
+- internal use function `__AOI_Properties_Add`
+- internal use function `__AOI_VariantReplace`
+- internal use function `__AOI_Properties_Resize`
+- internal use function `__AOI_Properties_Remove`
+
+### Changed
+- use of new global variable `$__AOI_tagObject` for object struct reference.
+- use of new global enums `$__AOI_ConstantProperty_*` for built in IDispatch object methods (negative id range).
+- use of new global varaibles `$__AOI_Object_Element_*` for object pointer element offsets.
+- IDispatch properties are now stored as an array instead of a singly linked list. (63836f6a2832c4e4123a00961a8d2184f58e0266)
+- function rename `AddRef` => `__AOI_AddRef`
+- function rename `Release` => `__AOI_Release`
+- function rename `GetIDsOfNames` => `__AOI_GetIDsOfNames`
+- function rename `GetTypeInfo` => `__AOI_GetTypeInfo`
+- function rename `GetTypeInfoCount` => `__AOI_GetTypeInfoCount`
+- function rename `Invoke` => `__AOI_Invoke`
+- function rename `MemCloneGlob` => `__AOI_MemCloneGlob`
+- function rename `GlobalHandle` => `__AOI_GlobalHandle`
+- function rename `VariantInit` => `__AOI_VariantInit`
+- function rename `VariantCopy` => `__AOI_VariantCopy`
+- function rename `VariantClear` => `__AOI_VariantClear`
+- function rename `PrivateProperty` => `_AOI_PrivateProperty`
+- variable rename `$IID_IUnknown` => `$__AOI_IID_IUnknown`
+- variable rename `$IID_IDispatch` => `$__AOI_IID_IDispatch`
+- variable rename `$IID_IConnectionPointContainer` => `$__AOI_IID_IConnectionPointContainer`
+- variable rename `$DISPATCH_METHOD` => `$__AOI_DISPATCH_METHOD`
+- variable rename `$DISPATCH_PROPERTYGET` => `$__AOI_DISPATCH_PROPERTYGET`
+- variable rename `$DISPATCH_PROPERTYPUT` => `$__AOI_DISPATCH_PROPERTYPUT`
+- variable rename `$DISPATCH_PROPERTYPUTREF` => `$__AOI_DISPATCH_PROPERTYPUTREF`
+- variable rename `$S_OK` => `$__AOI_S_OK`
+- variable rename `$E_NOTIMPL` => `$__AOI_E_NOTIMPL`
+- variable rename `$E_NOINTERFACE` => `$__AOI_E_NOINTERFACE`
+- variable rename `$E_POINTER` => `$__AOI_E_POINTER`
+- variable rename `$E_ABORT` => `$__AOI_E_ABORT`
+- variable rename `$E_FAIL` => `$__AOI_E_FAIL`
+- variable rename `$E_ACCESSDENIED` => `$__AOI_E_ACCESSDENIED`
+- variable rename `$E_HANDLE` => `$__AOI_E_HANDLE`
+- variable rename `$E_OUTOFMEMORY` => `$__AOI_E_OUTOFMEMORY`
+- variable rename `$E_INVALIDARG` => `$__AOI_E_INVALIDARG`
+- variable rename `$E_UNEXPECTED` => `$__AOI_E_UNEXPECTED`
+- variable rename `$DISP_E_UNKNOWNINTERFACE` => `$__AOI_DISP_E_UNKNOWNINTERFACE`
+- variable rename `$DISP_E_MEMBERNOTFOUND` => `$__AOI_DISP_E_MEMBERNOTFOUND`
+- variable rename `$DISP_E_PARAMNOTFOUND` => `$__AOI_DISP_E_PARAMNOTFOUND`
+- variable rename `$DISP_E_TYPEMISMATCH` => `$__AOI_DISP_E_TYPEMISMATCH`
+- variable rename `$DISP_E_UNKNOWNNAME` => `$__AOI_DISP_E_UNKNOWNNAME`
+- variable rename `$DISP_E_NONAMEDARGS` => `$__AOI_DISP_E_NONAMEDARGS`
+- variable rename `$DISP_E_BADVARTYPE` => `$__AOI_DISP_E_BADVARTYPE`
+- variable rename `$DISP_E_EXCEPTION` => `$__AOI_DISP_E_EXCEPTION`
+- variable rename `$DISP_E_OVERFLOW` => `$__AOI_DISP_E_OVERFLOW`
+- variable rename `$DISP_E_BADINDEX` => `$__AOI_DISP_E_BADINDEX`
+- variable rename `$DISP_E_UNKNOWNLCID` => `$__AOI_DISP_E_UNKNOWNLCID`
+- variable rename `$DISP_E_ARRAYISLOCKED` => `$__AOI_DISP_E_ARRAYISLOCKED`
+- variable rename `$DISP_E_BADPARAMCOUNT` => `$__AOI_DISP_E_BADPARAMCOUNT`
+- variable rename `$DISP_E_PARAMNOTOPTIONAL` => `$__AOI_DISP_E_PARAMNOTOPTIONAL`
+- variable rename `$DISP_E_BADCALLEE` => `$__AOI_DISP_E_BADCALLEE`
+- variable rename `$DISP_E_NOTACOLLECTION` => `$__AOI_DISP_E_NOTACOLLECTION`
+- variable rename `$tagVARIANT` => `$__AOI_tagVARIANT`
+- variable rename `$tagDISPPARAMS` => `$__AOI_tagDISPPARAMS`
+- variable rename `$VT_*` => `$__AOI_VT_*`
+- variable rename `$tagProperty` => `$__AOI_tagProperty`
+
+### Removed
+- function `__AOI_PropertyCreate`
+- function `LocalSize`
+- function `LocalHandle`
+- function `HeapSize`
+- function `GetProcessHeap`
+- function `VariantChangeType`
+- function `VariantChangeTypeEx`
+- function `__AOI_GetPtrValue`
+
+### Fixed
 
 ## [3.0.0] - 2021-02-18
 ### Added
