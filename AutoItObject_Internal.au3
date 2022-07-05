@@ -776,12 +776,13 @@ Func __AOI_PropertyGetFromName($tObject, $psName, $bCase = True)
 	Local $iID = -1, $tProperty
 	Local $pProperties = $tObject.Properties
 	If $pProperties = 0 Then Return SetExtended(-1, 0)
+	Local $sName = DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1)
 	For $i=1 To $tObject.iProperties;FIXME: check if including zero gives any problems
 		$tProperty = DllStructCreate($__AOI_tagProperty, $pProperties + ($__AOI_cProperty * $i))
-		If $bCase And DllStructGetData(DllStructCreate("WCHAR["&$tProperty.cName&"]", $tProperty.Name), 1) == DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1) Then
+		If $bCase And DllStructGetData(DllStructCreate("WCHAR["&$tProperty.cName&"]", $tProperty.Name), 1) == $sName Then
 			$iID = $i
 			ExitLoop
-		ElseIf Not $bCase And DllStructGetData(DllStructCreate("WCHAR["&$tProperty.cName&"]", $tProperty.Name), 1) = DllStructGetData(DllStructCreate("WCHAR[255]", $psName), 1) Then
+		ElseIf Not $bCase And DllStructGetData(DllStructCreate("WCHAR["&$tProperty.cName&"]", $tProperty.Name), 1) = $sName Then
 			$iID = $i
 			ExitLoop
 		EndIf
