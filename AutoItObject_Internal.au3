@@ -73,7 +73,7 @@ Global Const $__AOI_Object_Element_cProperties = __AOI_GetPtrOffset("cProperties
 Global Const $__AOI_Object_Element_lock = __AOI_GetPtrOffset("lock")
 Global Const $__AOI_Object_Element___destructor = __AOI_GetPtrOffset("__destructor")
 
-Func IDispatch($QueryInterface=QueryInterface, $AddRef=__AOI_AddRef, $Release=__AOI_Release, $GetTypeInfoCount=__AOI_GetTypeInfoCount, $GetTypeInfo=__AOI_GetTypeInfo, $GetIDsOfNames=__AOI_GetIDsOfNames, $Invoke=__AOI_Invoke)
+Func IDispatch($QueryInterface=__AOI_QueryInterface, $AddRef=__AOI_AddRef, $Release=__AOI_Release, $GetTypeInfoCount=__AOI_GetTypeInfoCount, $GetTypeInfo=__AOI_GetTypeInfo, $GetIDsOfNames=__AOI_GetIDsOfNames, $Invoke=__AOI_Invoke)
 	Local $tObject = DllStructCreate($__AOI_tagObject)
 
 	$QueryInterface = DllCallbackRegister($QueryInterface, "LONG", "ptr;ptr;ptr")
@@ -118,7 +118,7 @@ EndFunc
 #cs
 # @internal
 #ce
-Func QueryInterface($pSelf, $pRIID, $pObj)
+Func __AOI_QueryInterface($pSelf, $pRIID, $pObj)
 	If $pObj=0 Then Return $__AOI_E_POINTER
 	Local $sGUID=DllCall("ole32.dll", "int", "StringFromGUID2", "PTR", $pRIID, "wstr", "", "int", 40)[2]
 	If (Not ($sGUID=$__AOI_IID_IDispatch)) And (Not ($sGUID=$__AOI_IID_IUnknown)) Then Return $__AOI_E_NOINTERFACE
