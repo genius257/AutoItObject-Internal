@@ -13,12 +13,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - internal use function `__AOI_VariantReplace`
 - internal use function `__AOI_Properties_Resize`
 - internal use function `__AOI_Properties_Remove`
+- internal use function `__AOI_Invoke_isExtensible`
+- internal use function `__AOI_Invoke_case`
+- internal use function `__AOI_Invoke_lookupSetter`
+- internal use function `__AOI_Invoke_lookupGetter`
+- internal use function `__AOI_Invoke_assign`
+- internal use function `__AOI_Invoke_isSealed`
+- internal use function `__AOI_Invoke_isFrozen`
+- internal use function `__AOI_Invoke_get`
+- internal use function `__AOI_Invoke_set`
+- internal use function `__AOI_Invoke_exists`
+- internal use function `__AOI_Invoke_destructor`
+- internal use function `__AOI_Invoke_freeze`
+- internal use function `__AOI_Invoke_seal`
+- internal use function `__AOI_Invoke_preventExtensions`
+- internal use function `__AOI_Invoke_unset`
+- internal use function `__AOI_Invoke_keys`
+- internal use function `__AOI_Invoke_defineGetter`
+- internal use function `__AOI_Invoke_defineSetter`
 
 ### Changed
 - use of new global variable `$__AOI_tagObject` for object struct reference.
 - use of new global enums `$__AOI_ConstantProperty_*` for built in IDispatch object methods (negative id range).
 - use of new global varaibles `$__AOI_Object_Element_*` for object pointer element offsets.
 - IDispatch properties are now stored as an array instead of a singly linked list. (63836f6a2832c4e4123a00961a8d2184f58e0266)
+- function rename `QueryInterface` => `__AOI_QueryInterface`
 - function rename `AddRef` => `__AOI_AddRef`
 - function rename `Release` => `__AOI_Release`
 - function rename `GetIDsOfNames` => `__AOI_GetIDsOfNames`
