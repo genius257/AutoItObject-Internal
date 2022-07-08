@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Crash when creating too many objects (f86a0c40b45915a7b215b86a89aa5c2d92cdae23)
 
 ## [4.0.0] - 2022-07-08
 ### Added
