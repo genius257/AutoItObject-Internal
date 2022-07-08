@@ -77,31 +77,39 @@ Global Const $__AOI_Object_Element___destructor = __AOI_GetPtrOffset("__destruct
 Func IDispatch($QueryInterface=__AOI_QueryInterface, $AddRef=__AOI_AddRef, $Release=__AOI_Release, $GetTypeInfoCount=__AOI_GetTypeInfoCount, $GetTypeInfo=__AOI_GetTypeInfo, $GetIDsOfNames=__AOI_GetIDsOfNames, $Invoke=__AOI_Invoke)
 	Local $tObject = DllStructCreate($__AOI_tagObject)
 
-	$QueryInterface = DllCallbackRegister($QueryInterface, "LONG", "ptr;ptr;ptr")
+	Local Static $hQueryInterface = DllCallbackRegister(__AOI_QueryInterface, "LONG", "ptr;ptr;ptr")
+	Local Static $hAddRef = DllCallbackRegister(__AOI_AddRef, "dword", "PTR")
+	Local Static $hRelease = DllCallbackRegister(__AOI_Release, "dword", "PTR")
+	Local Static $hGetTypeInfoCount = DllCallbackRegister(__AOI_GetTypeInfoCount, "long", "ptr;ptr")
+	Local Static $hGetTypeInfo = DllCallbackRegister(__AOI_GetTypeInfo, "long", "ptr;uint;int;ptr")
+	Local Static $hGetIDsOfNames = DllCallbackRegister(__AOI_GetIDsOfNames, "long", "ptr;ptr;ptr;uint;int;ptr")
+	Local Static $hInvoke = DllCallbackRegister(__AOI_Invoke, "long", "ptr;int;ptr;int;ushort;ptr;ptr;ptr;ptr")
+
+	$QueryInterface = $QueryInterface = __AOI_QueryInterface ? $hQueryInterface : DllCallbackRegister($QueryInterface, "LONG", "ptr;ptr;ptr")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($QueryInterface), 1)
 	DllStructSetData($tObject, "Callbacks", $QueryInterface, 1)
 
-	$AddRef = DllCallbackRegister($AddRef, "dword", "PTR")
+	$AddRef = $AddRef = __AOI_AddRef ? $hAddRef : DllCallbackRegister($AddRef, "dword", "PTR")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($AddRef), 2)
 	DllStructSetData($tObject, "Callbacks", $AddRef, 2)
 
-	$Release = DllCallbackRegister($Release, "dword", "PTR")
+	$Release = $Release = __AOI_Release ? $hRelease : DllCallbackRegister($Release, "dword", "PTR")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($Release), 3)
 	DllStructSetData($tObject, "Callbacks", $Release, 3)
 
-	$GetTypeInfoCount = DllCallbackRegister($GetTypeInfoCount, "long", "ptr;ptr")
+	$GetTypeInfoCount = $GetTypeInfoCount = __AOI_GetTypeInfoCount ? $hGetTypeInfoCount : DllCallbackRegister($GetTypeInfoCount, "long", "ptr;ptr")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($GetTypeInfoCount), 4)
 	DllStructSetData($tObject, "Callbacks", $GetTypeInfoCount, 4)
 
-	$GetTypeInfo = DllCallbackRegister($GetTypeInfo, "long", "ptr;uint;int;ptr")
+	$GetTypeInfo = $GetTypeInfo = __AOI_GetTypeInfo ? $hGetTypeInfo : DllCallbackRegister($GetTypeInfo, "long", "ptr;uint;int;ptr")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($GetTypeInfo), 5)
 	DllStructSetData($tObject, "Callbacks", $GetTypeInfo, 5)
 
-	$GetIDsOfNames = DllCallbackRegister($GetIDsOfNames, "long", "ptr;ptr;ptr;uint;int;ptr")
+	$GetIDsOfNames = $GetIDsOfNames = __AOI_GetIDsOfNames ? $hGetIDsOfNames : DllCallbackRegister($GetIDsOfNames, "long", "ptr;ptr;ptr;uint;int;ptr")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($GetIDsOfNames), 6)
 	DllStructSetData($tObject, "Callbacks", $GetIDsOfNames, 6)
 
-	$Invoke = DllCallbackRegister($Invoke, "long", "ptr;int;ptr;int;ushort;ptr;ptr;ptr;ptr")
+	$Invoke = $Invoke = __AOI_Invoke ? $hInvoke : DllCallbackRegister($Invoke, "long", "ptr;int;ptr;int;ushort;ptr;ptr;ptr;ptr")
 	DllStructSetData($tObject, "Methods", DllCallbackGetPtr($Invoke), 7)
 	DllStructSetData($tObject, "Callbacks", $Invoke, 7)
 
