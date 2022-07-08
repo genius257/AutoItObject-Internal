@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+## [4.0.0] - 2022-07-08
+### Added
 - new global varaible `$__AOI_tagObject`
 - new global enums `$__AOI_ConstantProperty_*`
 - new test for `__unset` method
@@ -98,8 +107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - function `VariantChangeType`
 - function `VariantChangeTypeEx`
 - function `__AOI_GetPtrValue`
-
-### Fixed
 
 ## [3.0.0] - 2021-02-18
 ### Added
