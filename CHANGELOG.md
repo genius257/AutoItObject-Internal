@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Crash when creating too many objects (f86a0c40b45915a7b215b86a89aa5c2d92cdae23)
+- Could not modify the default object method property `$oIDispatch()` (58fa551319727450e39ee171ae574438b0815372)
 
 ## [4.0.0] - 2022-07-08
 ### Added
