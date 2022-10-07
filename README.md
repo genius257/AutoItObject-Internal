@@ -23,17 +23,17 @@ MsgBox(0, "", $myCar.DisplayCar)
 
 ## Comparing AutoItObject Internal to Other options
 
-| Feature | AutoItObject-Internal | [AutoItObject UDF](https://www.autoitscript.com/forum/topic/110379-autoitobject-udf/) | [OOPEAu3](https://github.com/cosote/OOPEAu3) |
-| - | - | - | - |
-| getters | :heavy_check_mark: | :x: | :x: |
-| setters | :heavy_check_mark: | :x: | :x: |
-| destructors | :heavy_check_mark::warning:¹ | :heavy_check_mark: | :question: |
-| inheritance | :heavy_check_mark::warning:² | :heavy_check_mark: | :x: |
-| supports all au3 var types | :heavy_check_mark: | :x: | :x: |
-| native windows dlls and AutoIt only | :heavy_check_mark: | :x: | :heavy_check_mark: |
-| dynamic number of method parameters | :heavy_check_mark: | :x: | :heavy_minus_sign:³ |
-| registering objects in the ROT | :heavy_check_mark: | :heavy_check_mark: | :x: |
-| extending/editing UDF object logic | AutoIt | c++ | AutoIt |
+| Feature | AutoItObject-Internal | [AutoItObject UDF](https://www.autoitscript.com/forum/topic/110379-autoitobject-udf/) | [OOPEAu3](https://github.com/cosote/OOPEAu3) | [Map](https://www.autoitscript.com/autoit3/docs/intro/lang_variables.htm#ArrayMaps) |
+| - | - | - | - | - |
+| getters | :heavy_check_mark: | :x: | :x: | :x: |
+| setters | :heavy_check_mark: | :x: | :x: | :x: |
+| destructors | :heavy_check_mark::warning:¹ | :heavy_check_mark: | :question: | :x: |
+| inheritance | :heavy_check_mark::warning:² | :heavy_check_mark: | :x: | :x: |
+| supports all au3 var types | :heavy_check_mark: | :x: | :x: | :heavy_check_mark: |
+| native windows dlls and AutoIt only | :heavy_check_mark: | :x: | :heavy_check_mark: | :heavy_check_mark: |
+| dynamic number of method parameters | :heavy_check_mark: | :x: | :heavy_minus_sign:³ | :x: |
+| registering objects in the ROT | :heavy_check_mark: | :heavy_check_mark: | :x: | :x: |
+| extending/editing UDF object logic | AutoIt | c++ | AutoIt | :x: |
 
  ¹ destructors are not triggered on script shutdown. 
  
